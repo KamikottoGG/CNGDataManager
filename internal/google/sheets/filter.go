@@ -28,27 +28,3 @@ func ExtractValuesFromRows(rows *sheets.ValueRange) []map[string]string {
 
 	return values
 }
-
-func FilterValues(values []map[string]string) []map[string]string {
-	var newValues = make([]map[string]string, 0, len(values)/4)
-
-	for _, value := range values {
-		if len(value["Дата [ДД/ММ/РРРР]"]) == 0 {
-			continue
-		}
-		if len(value["Стать"]) == 0 {
-			continue
-		}
-		if len(value["Прізвище"]) == 0 {
-			continue
-		}
-		if len(value["Ім'я"]) == 0 {
-			continue
-		}
-
-		newValues = append(newValues, value)
-	}
-
-	return newValues
-
-}

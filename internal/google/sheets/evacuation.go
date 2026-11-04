@@ -87,6 +87,30 @@ func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	return nil
 }
 
+func FilterEvacuationValues(values []map[string]string) []map[string]string {
+	var newValues = make([]map[string]string, 0, len(values)/4)
+
+	for _, value := range values {
+		if len(value["Дата [ДД/ММ/РРРР]"]) == 0 {
+			continue
+		}
+		if len(value["Стать"]) == 0 {
+			continue
+		}
+		if len(value["Прізвище"]) == 0 {
+			continue
+		}
+		if len(value["Ім'я"]) == 0 {
+			continue
+		}
+
+		newValues = append(newValues, value)
+	}
+
+	return newValues
+
+}
+
 func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.Spreadsheet, jsonOutputFilePath string) error {
 
 	log.Print("[+] ", "Evacuation spreadsheet got with name: "+evacuationSpreadSheet.Properties.Title)
@@ -110,7 +134,7 @@ func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.
 
 		extractedValues := ExtractValuesFromRows(rows)
 
-		filteredValues := FilterValues(extractedValues)
+		filteredValues := FilterEvacuationValues(extractedValues)
 
 		fvr := len(filteredValues)
 
