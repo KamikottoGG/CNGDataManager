@@ -69,7 +69,7 @@ func main() {
 
 		log.Printf("	[?] %d rows filtered. ", fvr)
 
-		mappedObjects := make([]sheets.Evacuation, fvr)
+		mappedObjects := make([]sheets.Evacuation, 0, fvr)
 
 		for j, v := range *filteredValues {
 			if err := mappedObjects[j].MapObject(v); err != nil {
