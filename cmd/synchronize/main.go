@@ -36,6 +36,12 @@ func main() {
 		log.Fatal("EVACUATION_SPREAD_SHEET_ID environment variable not set")
 	}
 
+	eJson := os.Getenv("EVACUATION_CACHE_JSON_FILE_PATH")
+
+	if eJson == "" {
+		log.Fatal("EVACUATION_CACHE_JSON_FILE_PATH environment variable not set")
+	}
+
 	evacuationSpreadSheet, err := sheetsService.Spreadsheets.Get(eid).Do()
 
 	if err != nil {
@@ -93,5 +99,13 @@ func main() {
 
 	log.Printf("	[+] %d month iterated. ", len(collectedData))
 	log.Printf("[+] %d rows mapped (not persisted yet)", rowsAffected)
+
+	err = sheets.WriteToJsonFile(eJson, collectedData)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("[+] Evacuation cache saved succesfully at path [%s]", eJson)
 
 }
