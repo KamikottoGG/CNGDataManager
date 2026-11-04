@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+type NullString string
+
 func WriteToJsonFile(filePath string, data any) error {
 
 	f, err := os.Create(filePath + ".tmp")
@@ -21,4 +23,11 @@ func WriteToJsonFile(filePath string, data any) error {
 	}
 
 	return os.Rename(filePath+".tmp", filePath)
+}
+
+func (ns NullString) MarshalJSON() ([]byte, error) {
+	if ns == "" {
+		return []byte("null"), nil
+	}
+	return json.Marshal(string(ns))
 }

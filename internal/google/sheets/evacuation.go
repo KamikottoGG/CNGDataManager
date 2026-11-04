@@ -16,25 +16,25 @@ type DateOnly time.Time
 type Evacuation struct {
 	Date DateOnly `json:"date"`
 
-	Name       string `json:"name"`
-	Surname    string `json:"surname"`
-	Patronymic string `json:"patronymic"`
+	Name       string     `json:"name"`
+	Surname    string     `json:"surname"`
+	Patronymic NullString `json:"patronymic"`
 
 	BirthDate      DateOnly            `json:"birthDate"`
 	Age            int                 `json:"age"`
 	Sex            BeneficiarySex      `json:"sex"`
 	Disability     bool                `json:"disability"`
 	Passport       BeneficiaryPassport `json:"passport"`
-	TaxId          string              `json:"taxId"`
-	Region         string              `json:"region"`
-	District       string              `json:"district"`
-	Community      string              `json:"community"`
-	SettlementType string              `json:"settlementType"`
-	Settlement     string              `json:"settlement"`
+	TaxId          NullString          `json:"taxId"`
+	Region         NullString          `json:"region"`
+	District       NullString          `json:"district"`
+	Community      NullString          `json:"community"`
+	SettlementType NullString          `json:"settlementType"`
+	Settlement     NullString          `json:"settlement"`
 
-	EvacuatedTo string `json:"evacuatedTo"`
-	PhoneNumber string `json:"phoneNumber"`
-	Comment     string `json:"comment"`
+	EvacuatedTo NullString `json:"evacuatedTo"`
+	PhoneNumber NullString `json:"phoneNumber"`
+	Comment     NullString `json:"comment"`
 }
 
 func (d DateOnly) MarshalJSON() ([]byte, error) {
@@ -127,7 +127,7 @@ func (e *Evacuation) MapObject(object map[string]string) error {
 
 	e.Surname = get("Прізвище")
 	e.Name = get("Ім'я")
-	e.Patronymic = get("По батькові")
+	e.Patronymic = NullString(get("По батькові"))
 
 	if e.BirthDate, err = parseSheetDate(get("Дата народження [ДД/ММ/РРРР]")); err != nil {
 		return fmt.Errorf("birth date: %w", err)
@@ -155,16 +155,16 @@ func (e *Evacuation) MapObject(object map[string]string) error {
 	}
 	e.Passport.IssueCountry = get("Країна видачі")
 
-	e.TaxId = get("ІПН")
-	e.Region = get("Звідки область")
-	e.District = get("Звідки район")
-	e.Community = get("Звідки Громада")
-	e.SettlementType = get("Тип населеного пункту")
-	e.Settlement = get("Звідки Наcпункт")
+	e.TaxId = NullString(get("ІПН"))
+	e.Region = NullString(get("Звідки область"))
+	e.District = NullString(get("Звідки район"))
+	e.Community = NullString(get("Звідки Громада"))
+	e.SettlementType = NullString(get("Тип населеного пункту"))
+	e.Settlement = NullString(get("Звідки Наcпункт"))
 
-	e.EvacuatedTo = get("Куди евакуювалися")
-	e.PhoneNumber = get("Номер телефону")
-	e.Comment = get("Коментар")
+	e.EvacuatedTo = NullString(get("Куди евакуювалися"))
+	e.PhoneNumber = NullString(get("Номер телефону"))
+	e.Comment = NullString(get("Коментар"))
 
 	return nil
 }
