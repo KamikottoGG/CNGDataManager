@@ -10,7 +10,7 @@ func text(msg ...interface{}) string {
 	return fmt.Sprintf("%+v", msg...)
 }
 
-func ExtractValuesFromRows(rows *sheets.ValueRange) *[]map[string]string {
+func ExtractValuesFromRows(rows *sheets.ValueRange) []map[string]string {
 
 	var values = make([]map[string]string, 0, len(rows.Values))
 
@@ -26,13 +26,13 @@ func ExtractValuesFromRows(rows *sheets.ValueRange) *[]map[string]string {
 		values = append(values, mappedObj)
 	}
 
-	return &values
+	return values
 }
 
-func FilterValues(values *[]map[string]string) *[]map[string]string {
-	var newValues = make([]map[string]string, 0, len(*values)/4)
+func FilterValues(values []map[string]string) []map[string]string {
+	var newValues = make([]map[string]string, 0, len(values)/4)
 
-	for _, value := range *values {
+	for _, value := range values {
 		if len(value["Дата [ДД/ММ/РРРР]"]) == 0 {
 			continue
 		}
@@ -49,6 +49,6 @@ func FilterValues(values *[]map[string]string) *[]map[string]string {
 		newValues = append(newValues, value)
 	}
 
-	return &newValues
+	return newValues
 
 }

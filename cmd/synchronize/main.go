@@ -65,17 +65,23 @@ func main() {
 
 		filteredValues := sheets.FilterValues(extractedValues)
 
-		fvr := len(*filteredValues)
+		fvr := len(filteredValues)
 
 		log.Printf("	[?] %d rows filtered. ", fvr)
 
 		mappedObjects := make([]sheets.Evacuation, 0, fvr)
 
-		for j, v := range *filteredValues {
-			if err := mappedObjects[j].MapObject(v); err != nil {
+		for j, v := range filteredValues {
+
+			var mappedObject sheets.Evacuation
+
+			if err := mappedObject.MapObject(v); err != nil {
 				log.Printf("[!] row %d: %v", j, err)
 				continue
 			}
+
+			mappedObjects = append(mappedObjects, mappedObject)
+
 			rowsAffected++
 		}
 
