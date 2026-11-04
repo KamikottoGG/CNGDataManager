@@ -2,9 +2,12 @@ package sheets
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"google.golang.org/api/sheets/v4"
 )
 
 const (
@@ -166,5 +169,69 @@ func (e *Evacuation) MapObject(object map[string]string) error {
 	e.PhoneNumber = NullString(get("Номер телефону"))
 	e.Comment = NullString(get("Коментар"))
 
+	return nil
+}
+
+func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.Spreadsheet, jsonOutputFilePath string) error {
+
+	log.Print("[+] ", "Evacuation spreadsheet got with name: "+evacuationSpreadSheet.Properties.Title)
+
+	log.Printf("[?] Found %d sheets in spreadsheet", len(evacuationSpreadSheet.Sheets))
+
+	collectedData := make([]*[]Evacuation, 0, len(evacuationSpreadSheet.Sheets))
+
+	rowsAffected := 0
+
+	for i, sheet := range evacuationSpreadSheet.Sheets {
+		log.Printf("[%d/%d] Starts work with sheet. Name: %s ", i+1, len(evacuationSpreadSheet.Sheets), sheet.Properties.Title)
+
+		rows, err := service.Spreadsheets.Values.Get(evacuationSpreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:W").Do()
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("	[?] %d rows parsed. ", len(rows.Values))
+
+		extractedValues := ExtractValuesFromRows(rows)
+
+		filteredValues := FilterValues(extractedValues)
+
+		fvr := len(filteredValues)
+
+		log.Printf("	[?] %d rows filtered. ", fvr)
+
+		mappedObjects := make([]Evacuation, 0, fvr)
+
+		for j, v := range filteredValues {
+
+			var mappedObject Evacuation
+
+			if err := mappedObject.MapObject(v); err != nil {
+				log.Printf("[!] row %d: %v", j, err)
+				continue
+			}
+
+			mappedObjects = append(mappedObjects, mappedObject)
+
+			rowsAffected++
+		}
+
+		collectedData = append(collectedData, &mappedObjects)
+
+		log.Printf("[%d/%d] Work with sheet end. ", i+1, len(evacuationSpreadSheet.Sheets))
+
+	}
+
+	log.Printf("	[+] %d month iterated. ", len(collectedData))
+	log.Printf("[+] %d rows mapped (not persisted yet)", rowsAffected)
+
+	err := WriteToJsonFile(jsonOutputFilePath, collectedData)
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[+] Evacuation cache saved succesfully at path [%s]", jsonOutputFilePath)
 	return nil
 }
