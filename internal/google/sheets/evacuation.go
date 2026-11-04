@@ -40,56 +40,12 @@ type EvacuationRecord struct {
 
 const SHEET_DATE_LAYOUT = "02/01/2006"
 
-func parseSheetDate(s string) (DateOnly, error) {
-	s = strings.TrimSpace(s)
-	if s == "" || s == "-" {
-		return DateOnly{}, nil
-	}
-	for _, layout := range []string{
-		SHEET_DATE_LAYOUT,
-		"2/1/2006",
-		"02-01-2006",
-		"2-1-2006",
-		"02.01.2006",
-		"2.1.2006",
-		DATE_LAYOUT,
-		"2006-01-02",
-
-		"01-02-2006",
-		"1-2-2006",
-		"01/02/2006",
-	} {
-		if t, err := time.Parse(layout, s); err == nil {
-			return DateOnly(t), nil
-		}
-	}
-	return DateOnly{}, fmt.Errorf("incorrect date %q, expected DD/MM/YYYY", s)
-}
-
-func parseYesNo(s string) bool {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "так", "yes", "true", "+", "1":
-		return true
-	}
-	return false
-}
-
-func parseSex(s string) (BeneficiarySex, error) {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "чоловіча", "чоловік", "ч", "м", "male", "man":
-		return MALE, nil
-	case "жіноча", "жінка", "ж", "f", "female":
-		return FEMALE, nil
-	}
-	return "", fmt.Errorf("unknown sex value %q", s)
-}
-
 func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	get := func(key string) string { return strings.TrimSpace(object[key]) }
 
 	var err error
 
-	if e.Date, err = parseSheetDate(get("Дата [ДД/ММ/РРРР]")); err != nil {
+	if e.Date, err = ParseSheetDate(get("Дата [ДД/ММ/РРРР]")); err != nil {
 		return fmt.Errorf("evacuation date: %w", err)
 	}
 
@@ -97,7 +53,7 @@ func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	e.Name = get("Ім'я")
 	e.Patronymic = NullString(get("По батькові"))
 
-	if e.BirthDate, err = parseSheetDate(get("Дата народження [ДД/ММ/РРРР]")); err != nil {
+	if e.BirthDate, err = ParseSheetDate(get("Дата народження [ДД/ММ/РРРР]")); err != nil {
 		return fmt.Errorf("birth date: %w", err)
 	}
 
@@ -111,14 +67,14 @@ func (e *EvacuationRecord) MapObject(object map[string]string) error {
 		}
 	}
 
-	if e.Sex, err = parseSex(get("Стать")); err != nil {
+	if e.Sex, err = ParseSex(get("Стать")); err != nil {
 		return fmt.Errorf("sex: %w", err)
 	}
-	e.Disability = parseYesNo(get("Інвалідність (так/ні)"))
+	e.Disability = ParseYesNo(get("Інвалідність (так/ні)"))
 
 	e.Passport.Number = get("Паспорт")
 	e.Passport.Issuer = get("Орган що видав")
-	if e.Passport.IssueDate, err = parseSheetDate(get("Дата видачі")); err != nil {
+	if e.Passport.IssueDate, err = ParseSheetDate(get("Дата видачі")); err != nil {
 		return fmt.Errorf("passport issue date: %w", err)
 	}
 	e.Passport.IssueCountry = get("Країна видачі")

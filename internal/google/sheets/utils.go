@@ -8,50 +8,6 @@ import (
 	"time"
 )
 
-type NullString string
-
-func (ns NullString) MarshalJSON() ([]byte, error) {
-	if ns == "" {
-		return []byte("null"), nil
-	}
-	return json.Marshal(string(ns))
-}
-
-type DateOnly time.Time
-
-func (d DateOnly) MarshalJSON() ([]byte, error) {
-	t := time.Time(d)
-	if t.IsZero() {
-		return []byte("null"), nil
-	}
-	return []byte(fmt.Sprintf("%q", t.Format(DATE_LAYOUT))), nil
-}
-
-func (d *DateOnly) UnmarshalJSON(b []byte) error {
-	s := strings.TrimSpace(string(b))
-
-	if s == "null" || s == `""` || s == "" {
-		*d = DateOnly(time.Time{})
-		return nil
-	}
-
-	s = strings.Trim(s, `"`)
-	s = strings.TrimSpace(s)
-
-	if s == "" || s == "-" {
-		*d = DateOnly(time.Time{})
-		return nil
-	}
-
-	parsed, err := time.Parse(DATE_LAYOUT, s)
-	if err != nil {
-		return fmt.Errorf("incorrect date format %q, expected %s: %w", s, DATE_LAYOUT, err)
-	}
-
-	*d = DateOnly(parsed)
-	return nil
-}
-
 func WriteToJsonFile(filePath string, data any) error {
 	f, err := os.Create(filePath + ".tmp")
 	if err != nil {
@@ -67,4 +23,48 @@ func WriteToJsonFile(filePath string, data any) error {
 	}
 
 	return os.Rename(filePath+".tmp", filePath)
+}
+
+func ParseSheetDate(s string) (DateOnly, error) {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "-" {
+		return DateOnly{}, nil
+	}
+	for _, layout := range []string{
+		SHEET_DATE_LAYOUT,
+		"2/1/2006",
+		"02-01-2006",
+		"2-1-2006",
+		"02.01.2006",
+		"2.1.2006",
+		DATE_LAYOUT,
+		"2006-01-02",
+
+		"01-02-2006",
+		"1-2-2006",
+		"01/02/2006",
+	} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return DateOnly(t), nil
+		}
+	}
+	return DateOnly{}, fmt.Errorf("incorrect date %q, expected DD/MM/YYYY", s)
+}
+
+func ParseYesNo(s string) bool {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "так", "yes", "true", "+", "1":
+		return true
+	}
+	return false
+}
+
+func ParseSex(s string) (BeneficiarySex, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "чоловіча", "чоловік", "ч", "м", "male", "man":
+		return MALE, nil
+	case "жіноча", "жінка", "ж", "f", "female":
+		return FEMALE, nil
+	}
+	return "", fmt.Errorf("unknown sex value %q", s)
 }
