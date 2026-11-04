@@ -10,10 +10,6 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-const (
-	DATE_LAYOUT = "2006/01/02"
-)
-
 type EvacuationRecord struct {
 	Date DateOnly `json:"date"`
 
@@ -37,8 +33,6 @@ type EvacuationRecord struct {
 	PhoneNumber NullString `json:"phoneNumber"`
 	Comment     NullString `json:"comment"`
 }
-
-const SHEET_DATE_LAYOUT = "02/01/2006"
 
 func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	get := func(key string) string { return strings.TrimSpace(object[key]) }

@@ -31,13 +31,13 @@ func ParseSheetDate(s string) (DateOnly, error) {
 		return DateOnly{}, nil
 	}
 	for _, layout := range []string{
-		SHEET_DATE_LAYOUT,
+		"02/01/2006",
 		"2/1/2006",
 		"02-01-2006",
 		"2-1-2006",
 		"02.01.2006",
 		"2.1.2006",
-		DATE_LAYOUT,
+		"2006/01/02",
 		"2006-01-02",
 
 		"01-02-2006",
