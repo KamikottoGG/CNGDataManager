@@ -14,9 +14,7 @@ const (
 	DATE_LAYOUT = "2006/01/02"
 )
 
-type DateOnly time.Time
-
-type Evacuation struct {
+type EvacuationRecord struct {
 	Date DateOnly `json:"date"`
 
 	Name       string     `json:"name"`
@@ -38,39 +36,6 @@ type Evacuation struct {
 	EvacuatedTo NullString `json:"evacuatedTo"`
 	PhoneNumber NullString `json:"phoneNumber"`
 	Comment     NullString `json:"comment"`
-}
-
-func (d DateOnly) MarshalJSON() ([]byte, error) {
-	t := time.Time(d)
-	if t.IsZero() {
-		return []byte("null"), nil
-	}
-	return []byte(fmt.Sprintf("%q", t.Format(DATE_LAYOUT))), nil
-}
-
-func (d *DateOnly) UnmarshalJSON(b []byte) error {
-	s := strings.TrimSpace(string(b))
-
-	if s == "null" || s == `""` || s == "" {
-		*d = DateOnly(time.Time{})
-		return nil
-	}
-
-	s = strings.Trim(s, `"`)
-	s = strings.TrimSpace(s)
-
-	if s == "" || s == "-" {
-		*d = DateOnly(time.Time{})
-		return nil
-	}
-
-	parsed, err := time.Parse(DATE_LAYOUT, s)
-	if err != nil {
-		return fmt.Errorf("incorrect date format %q, expected %s: %w", s, DATE_LAYOUT, err)
-	}
-
-	*d = DateOnly(parsed)
-	return nil
 }
 
 const SHEET_DATE_LAYOUT = "02/01/2006"
@@ -119,7 +84,7 @@ func parseSex(s string) (BeneficiarySex, error) {
 	return "", fmt.Errorf("unknown sex value %q", s)
 }
 
-func (e *Evacuation) MapObject(object map[string]string) error {
+func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	get := func(key string) string { return strings.TrimSpace(object[key]) }
 
 	var err error
@@ -178,7 +143,7 @@ func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.
 
 	log.Printf("[?] Found %d sheets in spreadsheet", len(evacuationSpreadSheet.Sheets))
 
-	collectedData := make([]*[]Evacuation, 0, len(evacuationSpreadSheet.Sheets))
+	collectedData := make([]*[]EvacuationRecord, 0, len(evacuationSpreadSheet.Sheets))
 
 	rowsAffected := 0
 
@@ -201,11 +166,11 @@ func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.
 
 		log.Printf("	[?] %d rows filtered. ", fvr)
 
-		mappedObjects := make([]Evacuation, 0, fvr)
+		mappedObjects := make([]EvacuationRecord, 0, fvr)
 
 		for j, v := range filteredValues {
 
-			var mappedObject Evacuation
+			var mappedObject EvacuationRecord
 
 			if err := mappedObject.MapObject(v); err != nil {
 				log.Printf("[!] row %d: %v", j, err)
