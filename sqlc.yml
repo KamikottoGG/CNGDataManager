@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - schema: "db/migration/schema.sql"
+    queries: "db/query/query.sql"
+    engine: "mysql"
+    gen:
+      go:
+        package: "db"
+        out: "db/sqlc"
+        sql_package: "database/sql"
