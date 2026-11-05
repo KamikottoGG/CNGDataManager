@@ -111,20 +111,20 @@ func FilterEvacuationValues(values []map[string]string) []map[string]string {
 
 }
 
-func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.Spreadsheet, jsonOutputFilePath string) error {
+func CacheEvacuationData(service *sheets.Service, spreadSheet *sheets.Spreadsheet, jsonOutputFilePath string) error {
 
-	log.Print("[+] ", "Evacuation spreadsheet got with name: "+evacuationSpreadSheet.Properties.Title)
+	log.Print("[+] ", "Evacuation spreadsheet got with name: "+spreadSheet.Properties.Title)
 
-	log.Printf("[?] Found %d sheets in spreadsheet", len(evacuationSpreadSheet.Sheets))
+	log.Printf("[?] Found %d sheets in spreadsheet", len(spreadSheet.Sheets))
 
-	collectedData := make([]*[]EvacuationRecord, 0, len(evacuationSpreadSheet.Sheets))
+	collectedData := make([]EvacuationRecord, 0, len(spreadSheet.Sheets))
 
 	rowsAffected := 0
 
-	for i, sheet := range evacuationSpreadSheet.Sheets {
-		log.Printf("[%d/%d] Starts work with sheet. Name: %s ", i+1, len(evacuationSpreadSheet.Sheets), sheet.Properties.Title)
+	for i, sheet := range spreadSheet.Sheets {
+		log.Printf("[%d/%d] Starts work with sheet. Name: %s ", i+1, len(spreadSheet.Sheets), sheet.Properties.Title)
 
-		rows, err := service.Spreadsheets.Values.Get(evacuationSpreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:W").Do()
+		rows, err := service.Spreadsheets.Values.Get(spreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:W").Do()
 
 		if err != nil {
 			return err
@@ -132,15 +132,13 @@ func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.
 
 		log.Printf("	[?] %d rows parsed. ", len(rows.Values))
 
-		extractedValues := ExtractValuesFromRows(rows)
+		extractedValues := ExtractValuesFromRows(rows, 1)
 
 		filteredValues := FilterEvacuationValues(extractedValues)
 
 		fvr := len(filteredValues)
 
 		log.Printf("	[?] %d rows filtered. ", fvr)
-
-		mappedObjects := make([]EvacuationRecord, 0, fvr)
 
 		for j, v := range filteredValues {
 
@@ -151,14 +149,12 @@ func CacheEvacuationData(service *sheets.Service, evacuationSpreadSheet *sheets.
 				continue
 			}
 
-			mappedObjects = append(mappedObjects, mappedObject)
+			collectedData = append(collectedData, mappedObject)
 
 			rowsAffected++
 		}
 
-		collectedData = append(collectedData, &mappedObjects)
-
-		log.Printf("[%d/%d] Work with sheet end. ", i+1, len(evacuationSpreadSheet.Sheets))
+		log.Printf("[%d/%d] Work with sheet end. ", i+1, len(spreadSheet.Sheets))
 
 	}
 

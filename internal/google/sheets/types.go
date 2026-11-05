@@ -30,6 +30,20 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(ns))
 }
 
+var SupportedDateLayouts = []string{
+	"02/01/2006",
+	"2/1/2006",
+	"02-01-2006",
+	"2-1-2006",
+	"02.01.2006",
+	"2.1.2006",
+	"2006/01/02",
+	"2006-01-02",
+	"01-02-2006",
+	"1-2-2006",
+	"01/02/2006",
+}
+
 type DateOnly time.Time
 
 func (d DateOnly) MarshalJSON() ([]byte, error) {
@@ -37,7 +51,7 @@ func (d DateOnly) MarshalJSON() ([]byte, error) {
 	if t.IsZero() {
 		return []byte("null"), nil
 	}
-	return []byte(fmt.Sprintf("%q", t.Format(DATE_LAYOUT))), nil
+	return []byte(fmt.Sprintf("%q", t.Format("2006-01-02"))), nil
 }
 
 func (d *DateOnly) UnmarshalJSON(b []byte) error {
@@ -56,11 +70,12 @@ func (d *DateOnly) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	parsed, err := time.Parse(DATE_LAYOUT, s)
-	if err != nil {
-		return fmt.Errorf("incorrect date format %q, expected %s: %w", s, DATE_LAYOUT, err)
+	for _, layout := range SupportedDateLayouts {
+		if parsed, err := time.Parse(layout, s); err == nil {
+			*d = DateOnly(parsed)
+			return nil
+		}
 	}
 
-	*d = DateOnly(parsed)
-	return nil
+	return fmt.Errorf("incorrect date format %q, expected one of DD/MM/YYYY, YYYY-MM-DD, etc.", s)
 }
