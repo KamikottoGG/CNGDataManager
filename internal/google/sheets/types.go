@@ -10,21 +10,24 @@ import (
 type BeneficiarySex string
 
 const (
-	MALE   BeneficiarySex = "MAN"
+	MALE   BeneficiarySex = "MALE"
 	FEMALE BeneficiarySex = "FEMALE"
 )
 
 type BeneficiaryPassport struct {
-	Number       string   `json:"number"`
-	Issuer       string   `json:"issuer"`
-	IssueDate    DateOnly `json:"issueDate"`
-	IssueCountry string   `json:"issueCountry"`
+	Number       NullString `json:"number"`
+	Issuer       NullString `json:"issuer"`
+	IssueDate    DateOnly   `json:"issueDate"`
+	IssueCountry NullString `json:"issueCountry"`
 }
 
 type NullString string
 
 func (ns NullString) MarshalJSON() ([]byte, error) {
 	if ns == "" {
+		return []byte("null"), nil
+	}
+	if ns == "-" {
 		return []byte("null"), nil
 	}
 	return json.Marshal(string(ns))

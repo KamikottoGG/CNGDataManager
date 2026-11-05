@@ -81,8 +81,8 @@ func (m *MainShelterRecord) MapObject(object map[string]string) error {
 	m.Needs = NullString(get("Потреби"))
 	m.DepartureDate = NullString(get("Дата виїзду"))
 
-	m.Passport.Number = get("Серія та номер паспорту")
-	m.Passport.Issuer = get("Ким виданий")
+	m.Passport.Number = NullString(get("Серія та номер паспорту"))
+	m.Passport.Issuer = NullString(get("Ким виданий"))
 	if m.Passport.IssueDate, err = ParseSheetDate(get("Коли виданий")); err != nil {
 		return fmt.Errorf("passport issued date: %w", err)
 	}

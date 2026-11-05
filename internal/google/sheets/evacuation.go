@@ -66,12 +66,12 @@ func (e *EvacuationRecord) MapObject(object map[string]string) error {
 	}
 	e.Disability = ParseYesNo(get("Інвалідність (так/ні)"))
 
-	e.Passport.Number = get("Паспорт")
-	e.Passport.Issuer = get("Орган що видав")
+	e.Passport.Number = NullString(get("Паспорт"))
+	e.Passport.Issuer = NullString(get("Орган що видав"))
 	if e.Passport.IssueDate, err = ParseSheetDate(get("Дата видачі")); err != nil {
 		return fmt.Errorf("passport issue date: %w", err)
 	}
-	e.Passport.IssueCountry = get("Країна видачі")
+	e.Passport.IssueCountry = NullString(get("Країна видачі"))
 
 	e.TaxId = NullString(get("ІПН"))
 	e.Region = NullString(get("Звідки область"))
