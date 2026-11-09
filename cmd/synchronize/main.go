@@ -41,6 +41,15 @@ func main() {
 	if hid == "" {
 		log.Fatal("HOTLINE_SPREADSHEET_ID environment variable not set")
 	}
+
+	ltid := os.Getenv("LOCAL_TRANSPORTATION_SPREADSHEET_ID")
+
+	if ltid == "" {
+		log.Fatal("LOCAL_TRANSPORTATION_SPREADSHEET_ID environment variable not set")
+	}
+
+	//LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH=./cache/local_transportations.json
+
 	//
 	//eJson := os.Getenv("EVACUATION_CACHE_JSON_FILE_PATH")
 	//
@@ -70,6 +79,12 @@ func main() {
 
 	if hotlineJsonPath == "" {
 		log.Fatal("HOTLINE_CACHE_JSON_FILE_PATH environment variable not set")
+	}
+
+	localTransportationsJsonPath := os.Getenv("LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH")
+
+	if localTransportationsJsonPath == "" {
+		log.Fatal("LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH environment variable not set")
 	}
 
 	opts := []option.ClientOption{
@@ -127,6 +142,18 @@ func main() {
 	}
 
 	err = sheets.CacheHotlineData(sheetsService, hotlineSpreadSheet, hotlineJsonPath)
+
+	if err != nil {
+		log.Fatal("[X]", "[Error while saving hotline data]", err)
+	}
+
+	lTransportationsSpreadSheet, err := sheetsService.Spreadsheets.Get(ltid).Do()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = sheets.CacheLocalTransportationData(sheetsService, lTransportationsSpreadSheet, localTransportationsJsonPath)
 
 	if err != nil {
 		log.Fatal("[X]", "[Error while saving hotline data]", err)
