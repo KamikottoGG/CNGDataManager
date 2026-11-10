@@ -2,24 +2,34 @@ package utils
 
 import (
 	"CNGDataManager/internal/google/sheets"
+	"fmt"
+	"html"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func escape(s string) string {
+	return html.EscapeString(s)
+}
+
+func bold(text string) string {
+	return "<b>" + escape(text) + "</b>"
+}
 
 func writeGroupLine(sb *strings.Builder, label string, group GroupCount) {
 	if group.Total == 0 {
 		return
 	}
 
-	sb.WriteString("  • ")
+	sb.WriteString("  - ")
 	sb.WriteString(label)
 	sb.WriteString(": <b>")
 	sb.WriteString(strconv.Itoa(group.Total))
 	sb.WriteString("</b>")
 
 	if group.WithDisability > 0 {
-		sb.WriteString(" <i>(з них з інвалідністю: ")
+		sb.WriteString(" <i>(інв. ")
 		sb.WriteString(strconv.Itoa(group.WithDisability))
 		sb.WriteString(")</i>")
 	}
@@ -29,7 +39,7 @@ func writeGroupLine(sb *strings.Builder, label string, group GroupCount) {
 func writeSection(sb *strings.Builder, title string, data BeneficiariesDisaggregation, overwriteSecondLine string) {
 	if title != "" {
 		sb.WriteString(title)
-		sb.WriteString("\n")
+		sb.WriteByte('\n')
 	}
 
 	if overwriteSecondLine != "" {
@@ -40,14 +50,14 @@ func writeSection(sb *strings.Builder, title string, data BeneficiariesDisaggreg
 	}
 
 	sb.WriteString(strconv.Itoa(data.Total()))
-	sb.WriteString("</b>, з них:\n")
+	sb.WriteString("</b>\n")
 
 	writeGroupLine(sb, "Хлопці", data.Boys)
 	writeGroupLine(sb, "Дівчата", data.Girls)
 	writeGroupLine(sb, "Чоловіки", data.Men)
 	writeGroupLine(sb, "Жінки", data.Women)
-	writeGroupLine(sb, "Чоловіки похилого віку", data.ElderlyMen)
-	writeGroupLine(sb, "Жінки похилого віку", data.ElderlyWomen)
+	writeGroupLine(sb, "Чол. похилого віку", data.ElderlyMen)
+	writeGroupLine(sb, "Жін. похилого віку", data.ElderlyWomen)
 }
 
 func BuildReportTextRaw(
@@ -61,92 +71,87 @@ func BuildReportTextRaw(
 	var builder strings.Builder
 	builder.Grow(1024)
 
-	builder.WriteString("Звіт за ")
+	builder.WriteString("Звіт: ")
 	builder.WriteString(startDate.Format("02.01.2006"))
-	builder.WriteString(" — ")
+	builder.WriteString(" - ")
 	builder.WriteString(endDate.Format("02.01.2006"))
 	builder.WriteString("\n\n")
 
 	writeSection(&builder, "Евакуація:", evacuationDisaggregation, "")
-	builder.WriteString("\n")
+	builder.WriteByte('\n')
 	writeSection(&builder, "Прихисток:", shelterDisaggregation, "")
-	builder.WriteString("\n")
+	builder.WriteByte('\n')
 	writeSection(&builder, "Транзитний пункт:", transitDisaggregation, "")
-	builder.WriteString("\n")
+	builder.WriteByte('\n')
 	writeSection(&builder, "Перевезення:", localTransportationsDisaggregation, "")
 
 	return strings.TrimRight(builder.String(), "\n")
 }
 
 func writeHeader(sb *strings.Builder, header string) {
-	sb.WriteString("\n— — — — — — — — — — — — —\n")
 	sb.WriteString(bold(header))
-	sb.WriteString("\n\n")
+	sb.WriteByte('\n')
 }
 
 func writeReportHeader(sb *strings.Builder, startDate, endDate, cacheUpdateTime time.Time) {
-	sb.WriteString("<i>Кеш оновлено: ")
-	sb.WriteString(cacheUpdateTime.Format("15:04:05"))
-	sb.WriteString("</i>\n\n")
-
-	sb.WriteString("<b>Звіт CNG за ")
+	sb.WriteString("<b>Звіт CNG: ")
 	sb.WriteString(startDate.Format("02.01"))
-	sb.WriteString(" — ")
+	sb.WriteString(" - ")
 	sb.WriteString(endDate.Format("02.01"))
-	sb.WriteString("</b>\n")
-	sb.WriteString("<i>Нижче розбивка по кожному проекту за цей проміжок часу</i>\n")
-}
-
-func bold(text string) string {
-	return "<b>" + text + "</b>"
+	sb.WriteString("</b> (<i>оновл. ")
+	sb.WriteString(cacheUpdateTime.Format("15:04"))
+	sb.WriteString("</i>)\n\n")
 }
 
 func renderEvacuationSection(sb *strings.Builder, records []sheets.EvacuationRecord, tripRecords []sheets.VehicleTripRecord) {
 	writeHeader(sb, "ЕВАКУАЦІЯ")
 
-	dis := GetEvacuationBeneficiariesDisaggregation(records)
-
 	evacuationTrips := 0
 	for _, tripRecord := range tripRecords {
-		if strings.ToLower(string(tripRecord.TripType)) != "евакуація" {
+		if strings.TrimSpace(strings.ToLower(string(tripRecord.TripType))) != "евакуація" {
 			continue
 		}
 		evacuationTrips++
 	}
 
-	sb.WriteString("Кількість евакуаційних рейсів: <b>")
+	sb.WriteString("Рейсів: <b>")
 	sb.WriteString(strconv.Itoa(evacuationTrips))
 	sb.WriteString("</b>\n")
 
-	writeSection(sb, "", dis, "Всього евакуйовано")
+	dis := GetEvacuationBeneficiariesDisaggregation(records)
+	writeSection(sb, "", dis, "Евакуйовано")
 
 	geoDis := GetEvacuationGeoDisaggregation(records)
 	if len(geoDis) > 0 {
-		sb.WriteString("\n<b>Географічний розподіл (область / громада):</b>\n")
-
+		sb.WriteString("Географія:\n")
 		for r, hd := range geoDis {
-			sb.WriteString(r)
-			sb.WriteString(" обл.:\n")
+			sb.WriteString("  <b>")
+			sb.WriteString(escape(r))
+			sb.WriteString(" обл.:</b> ")
 
+			first := true
 			for h, c := range hd {
-				sb.WriteString("  • ")
-				sb.WriteString(h)
-				sb.WriteString(": <b>")
+				if !first {
+					sb.WriteString(", ")
+				}
+				sb.WriteString(escape(h))
+				sb.WriteString(" (<b>")
 				sb.WriteString(strconv.Itoa(c))
-				sb.WriteString("</b>\n")
+				sb.WriteString("</b>)")
+				first = false
 			}
+			sb.WriteByte('\n')
 		}
 	}
 
 	sb.WriteByte('\n')
 }
 
-func renderMainShelterSection(sb *strings.Builder, records, allRecords []sheets.MainShelterRecord) {
+func renderMainShelterSection(sb *strings.Builder, records, allRecords []sheets.MainShelterRecord, startDate, endDate time.Time) {
 	writeHeader(sb, "ОСНОВНИЙ ШЕЛТЕР")
 
 	dis := GetMainShelterBeneficiariesDisaggregation(records)
-	writeSection(sb, "", dis, "Прийнято людей")
-	sb.WriteByte('\n')
+	writeSection(sb, "", dis, "Прийнято")
 
 	persResidents := make([]sheets.MainShelterRecord, 0)
 	for _, record := range allRecords {
@@ -157,48 +162,78 @@ func renderMainShelterSection(sb *strings.Builder, records, allRecords []sheets.
 	}
 
 	persDis := GetMainShelterBeneficiariesDisaggregation(persResidents)
-	writeSection(sb, "", persDis, "Постійно проживає людей")
+	writeSection(sb, "", persDis, "Постійно проживає")
+
+	depResidents := make([]sheets.MainShelterRecord, 0)
+
+	for _, record := range allRecords {
+		if strings.TrimSpace(string(record.DepartureDate)) == "" {
+			continue
+		}
+
+		depDate, err := time.Parse("2006-01-02", string(record.DepartureDate))
+		if err != nil {
+			fmt.Printf("Error parsing departure date %s: %v\n", record.DepartureDate, err)
+			continue
+		}
+
+		if isDateInRange(depDate, startDate, endDate) {
+			depResidents = append(depResidents, record)
+		}
+	}
+	depDis := GetMainShelterBeneficiariesDisaggregation(depResidents)
+	writeSection(sb, "", depDis, "Виїхало")
 
 	sb.WriteByte('\n')
 }
 
-func renderTransitHubSection(sb *strings.Builder, records []sheets.TransitHubRecord, allRecords []sheets.TransitHubRecord) {
+func renderTransitHubSection(sb *strings.Builder, records []sheets.TransitHubRecord, allRecords []sheets.TransitHubRecord,
+	startDate, endDate time.Time) {
 	writeHeader(sb, "ТРАНЗИТНИЙ ХАБ")
 
 	dis := GetTransitHubBeneficiariesDisaggregation(records)
-	writeSection(sb, "", dis, "Людей прийнято")
+	writeSection(sb, "", dis, "Прийнято")
 
 	geoDis := GetTransitHubGeoDisaggregation(records)
 	if len(geoDis) > 0 {
-		sb.WriteString("\n<b>Прийняті з (область / громада):</b>\n")
-
+		sb.WriteString("Звідки:\n")
 		for r, hd := range geoDis {
-			sb.WriteString(r)
-			sb.WriteString(" обл.:\n")
+			sb.WriteString("  <b>")
+			sb.WriteString(escape(r))
+			sb.WriteString(" обл.:</b> ")
 
+			first := true
 			for h, c := range hd {
-				sb.WriteString("  • ")
-				sb.WriteString(h)
-				sb.WriteString(": <b>")
+				if !first {
+					sb.WriteString(", ")
+				}
+				sb.WriteString(escape(h))
+				sb.WriteString(" (<b>")
 				sb.WriteString(strconv.Itoa(c))
-				sb.WriteString("</b>\n")
+				sb.WriteString("</b>)")
+				first = false
 			}
+			sb.WriteByte('\n')
 		}
 	}
 
-	sb.WriteByte('\n')
 	renderTransitHubRemainsSection(sb, allRecords)
-	sb.WriteByte('\n')
 
 	depRecords := make([]sheets.TransitHubRecord, 0)
-	for _, record := range records {
-		if record.ResidenceStatus == "Заселений(а)" {
+
+	for _, record := range allRecords {
+
+		depDate := time.Time(record.DepartureDate)
+		if depDate.IsZero() {
 			continue
 		}
-		depRecords = append(depRecords, record)
+
+		if isDateInRange(depDate, startDate, endDate) {
+			depRecords = append(depRecords, record)
+		}
 	}
 
-	writeSection(sb, "", GetTransitHubBeneficiariesDisaggregation(depRecords), "Людей виїхало")
+	writeSection(sb, "", GetTransitHubBeneficiariesDisaggregation(depRecords), "Виїхало")
 
 	sb.WriteByte('\n')
 }
@@ -211,13 +246,13 @@ func renderTransitHubRemainsSection(sb *strings.Builder, records []sheets.Transi
 		}
 	}
 
-	writeSection(sb, "", GetTransitHubBeneficiariesDisaggregation(fRecords), "Людей залишилося")
+	writeSection(sb, "", GetTransitHubBeneficiariesDisaggregation(fRecords), "Залишилося")
 }
 
 func renderLocalTransportationsSection(sb *strings.Builder, records []sheets.LocalTransportationRecord) {
 	writeHeader(sb, "ЛОКАЛЬНІ ПЕРЕВЕЗЕННЯ")
 	dis := GetLocalTransportationsBeneficiariesDisaggregation(records)
-	writeSection(sb, "", dis, "Людей перевезено")
+	writeSection(sb, "", dis, "Перевезено")
 	sb.WriteByte('\n')
 }
 
@@ -225,14 +260,13 @@ func renderHotlineSection(sb *strings.Builder, records []sheets.HotlineCallRecor
 	writeHeader(sb, "ГАРЯЧА ЛІНІЯ")
 
 	if len(records) == 0 {
-		sb.WriteString("Жодного дзвінка за період не зафіксовано.\n\n")
+		sb.WriteString("Дзвінків не зафіксовано.\n\n")
 		return
 	}
 
-	sb.WriteString("Дзвінків за період: <b>")
+	sb.WriteString("Всього дзвінків: <b>")
 	sb.WriteString(strconv.Itoa(len(records)))
 	sb.WriteString("</b>\n")
-	sb.WriteString("З них:\n")
 
 	callTypes := make(map[string]int)
 	for _, record := range records {
@@ -240,14 +274,20 @@ func renderHotlineSection(sb *strings.Builder, records []sheets.HotlineCallRecor
 	}
 
 	for s, c := range callTypes {
-		sb.WriteString("  • ")
-		sb.WriteString(s)
+		sb.WriteString("  - ")
+		sb.WriteString(escape(s))
 		sb.WriteString(": <b>")
 		sb.WriteString(strconv.Itoa(c))
 		sb.WriteString("</b>\n")
 	}
 
 	sb.WriteByte('\n')
+}
+
+func isDateInRange(targetDate time.Time, start, end time.Time) bool {
+	startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, targetDate.Location())
+	endDay := time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 999999999, targetDate.Location())
+	return !targetDate.Before(startDay) && !targetDate.After(endDay)
 }
 
 func BuildFullReportText(
@@ -268,8 +308,8 @@ func BuildFullReportText(
 
 	writeReportHeader(&sb, startDate, endDate, cacheUpdateTime)
 	renderEvacuationSection(&sb, evacuationRecords, vehicleTripRecords)
-	renderMainShelterSection(&sb, shelterRecords, allShelterRecords)
-	renderTransitHubSection(&sb, transitRecords, allTransitRecords)
+	renderMainShelterSection(&sb, shelterRecords, allShelterRecords, startDate, endDate)
+	renderTransitHubSection(&sb, transitRecords, allTransitRecords, startDate, endDate)
 	renderHotlineSection(&sb, hotlineRecords)
 	renderLocalTransportationsSection(&sb, transportationsDisaggregation)
 
