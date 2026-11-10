@@ -2,6 +2,9 @@ package utils
 
 import (
 	"CNGDataManager/internal/google/sheets"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 func GetEvacuationBeneficiariesDisaggregation(records []sheets.EvacuationRecord) BeneficiariesDisaggregation {
@@ -160,4 +163,56 @@ func GetTransportationsBeneficiariesDisaggregation(records []sheets.LocalTranspo
 	}
 
 	return disaggregation
+}
+
+func toTitle(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+
+		return "Невідомо"
+	}
+	r, size := utf8.DecodeRuneInString(s)
+	return string(unicode.ToUpper(r)) + strings.ToLower(s[size:])
+}
+
+func GetEvacuationGeoDisaggregation(records []sheets.EvacuationRecord) map[string]map[string]int {
+	disaggregation := make(map[string]map[string]int)
+
+	for _, r := range records {
+		region := toTitle(string(r.Region))
+		district := toTitle(string(r.District))
+
+		if region == "Невідомо" {
+			continue
+		}
+
+		if disaggregation[region] == nil {
+			disaggregation[region] = make(map[string]int)
+		}
+
+		disaggregation[region][district]++
+	}
+
+	return (disaggregation)
+}
+
+func GetTransitHubGeoDisaggregation(records []sheets.TransitHubRecord) map[string]map[string]int {
+	disaggregation := make(map[string]map[string]int)
+
+	for _, r := range records {
+		region := toTitle(string(r.FromRegion))
+		district := toTitle(string(r.FromDistrict))
+
+		if region == "Невідомо" {
+			continue
+		}
+
+		if disaggregation[region] == nil {
+			disaggregation[region] = make(map[string]int)
+		}
+
+		disaggregation[region][district]++
+	}
+
+	return (disaggregation)
 }

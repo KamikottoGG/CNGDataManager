@@ -46,6 +46,7 @@ var SupportedDateLayouts = []string{
 	"01-02-2006",
 	"1-2-2006",
 	"01/02/2006",
+	"02.01.2006 15:04:05",
 }
 
 type DateOnly time.Time

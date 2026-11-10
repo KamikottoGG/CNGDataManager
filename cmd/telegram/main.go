@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/telebot.v4"
+	tele "gopkg.in/telebot.v4"
 )
 
 func main() {
@@ -24,22 +24,22 @@ func main() {
 		log.Fatal("API_BASE_URL environment variable not set")
 	}
 
-	settings := telebot.Settings{
+	settings := tele.Settings{
 		Token: botToken,
-		Poller: &telebot.LongPoller{
+		Poller: &tele.LongPoller{
 			Timeout: 10 * time.Second,
 		},
 	}
 
-	bot, err := telebot.NewBot(settings)
+	bot, err := tele.NewBot(settings)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bot.Handle("/start", func(c telebot.Context) error {
+	bot.Handle("/start", func(c tele.Context) error {
 
-		keyboard := telebot.ReplyMarkup{
+		keyboard := tele.ReplyMarkup{
 
 			ResizeKeyboard: true,
 		}
@@ -58,22 +58,30 @@ func main() {
 		)
 	})
 
-	createRawWeeklyReportMenu := telebot.ReplyMarkup{}
+	createRawWeeklyReportMenu := tele.ReplyMarkup{}
+
+	btnCreateFullWeeklyReport := createRawWeeklyReportMenu.Data("Щотижневий звіт)", "weekly_report_full")
 
 	btnCreateRawWeeklyReport := createRawWeeklyReportMenu.Data("Щотижневий звіт(цифри)", "weekly_report_raw")
 
 	createRawWeeklyReportMenu.Inline(
-		createRawWeeklyReportMenu.Row(btnCreateRawWeeklyReport))
+		createRawWeeklyReportMenu.Row(btnCreateFullWeeklyReport),
+		createRawWeeklyReportMenu.Row(btnCreateRawWeeklyReport),
+	)
 
-	bot.Handle("Щотижневий звіт 📊", func(c telebot.Context) error {
+	bot.Handle("Щотижневий звіт 📊", func(c tele.Context) error {
 
 		return c.Reply("Виберіть тип звіту для генерації... 👇",
-			&createRawWeeklyReportMenu)
+
+			&tele.SendOptions{
+				ParseMode:   tele.ModeHTML,
+				ReplyMarkup: &createRawWeeklyReportMenu,
+			})
 	})
 
-	bot.Handle(&btnCreateRawWeeklyReport, func(c telebot.Context) error {
+	bot.Handle(&btnCreateRawWeeklyReport, func(c tele.Context) error {
 
-		if err := c.Respond(&telebot.CallbackResponse{}); err != nil {
+		if err := c.Respond(&tele.CallbackResponse{}); err != nil {
 			return err
 		}
 
@@ -102,7 +110,7 @@ func main() {
 			DateEnd:   lastSunday,
 		}
 
-		e, th, lc, ms, _, err := utils.GetAllData(apiBase, params)
+		e, th, lc, ms, _, _, err := utils.GetAllData(apiBase, params)
 
 		if err != nil {
 			return fmt.Errorf("error in getting all data: %v", err)
@@ -117,6 +125,64 @@ func main() {
 		msd := utils.GetMainShelterBeneficiariesDisaggregation(ms)
 
 		if err := c.Edit(utils.BuildReportTextRaw(params.DateStart, params.DateEnd, ed, msd, thd, lcd)); err != nil {
+			return fmt.Errorf("error in report generation: %v", err)
+		}
+		return nil
+	})
+
+	bot.Handle(&btnCreateFullWeeklyReport, func(c tele.Context) error {
+
+		if err := c.Respond(&tele.CallbackResponse{}); err != nil {
+			return err
+		}
+
+		if err := c.Edit("Генерую звіт..."); err != nil {
+			return err
+		}
+
+		now := time.Now()
+
+		weekday := int(now.Weekday())
+		if weekday == 0 {
+			weekday = 7
+		}
+
+		currentMonday := now.AddDate(0, 0, -weekday+1)
+
+		lastMonday := currentMonday.AddDate(0, 0, -7)
+
+		lastSunday := lastMonday.AddDate(0, 0, 6)
+
+		lastMonday = time.Date(lastMonday.Year(), lastMonday.Month(), lastMonday.Day(), 0, 0, 0, 0, now.Location())
+		lastSunday = time.Date(lastSunday.Year(), lastSunday.Month(), lastSunday.Day(), 0, 0, 0, 0, now.Location())
+
+		params := utils.GetBeneficiariesDataParams{
+			DateStart: lastMonday,
+			DateEnd:   lastSunday,
+		}
+
+		e, tr, lc, ms, h, cUpdateTime, err := utils.GetAllData(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting all data: %v", err)
+		}
+
+		allms, _, err := utils.GetMainShelterData(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all main shelter data: %v", err)
+		}
+
+		allTr, err := utils.GetTransitHubData(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all transit hub data: %v", err)
+		}
+
+		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, cUpdateTime),
+			&tele.SendOptions{
+				ParseMode: tele.ModeHTML,
+			}); err != nil {
 			return fmt.Errorf("error in report generation: %v", err)
 		}
 		return nil

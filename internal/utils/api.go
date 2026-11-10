@@ -19,38 +19,39 @@ func GetAllData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets
 	[]sheets.LocalTransportationRecord,
 	[]sheets.MainShelterRecord,
 	[]sheets.HotlineCallRecord,
+	time.Time,
 	error) {
 	var err error
 
 	e, err := GetEvacuationBeneficiariesData(apiEndpoint, params)
 
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error getting evacuation beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting evacuation beneficiaries data: %w", err)
 	}
 
 	th, err := GetTransitHubData(apiEndpoint, params)
 
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error getting transit hub beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting transit hub beneficiaries data: %w", err)
 	}
 
 	lt, err := GetTransportationsData(apiEndpoint, params)
 
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error getting transportations beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting transportations beneficiaries data: %w", err)
 	}
 
-	ms, err := GetMainShelterData(apiEndpoint, params)
+	ms, cUpdatedTime, err := GetMainShelterData(apiEndpoint, params)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error getting main shelter beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting main shelter beneficiaries data: %w", err)
 	}
 
 	h, err := GetHotlineData(apiEndpoint, params)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error getting hotline beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting hotline beneficiaries data: %w", err)
 	}
 
-	return e, th, lt, ms, h, nil
+	return e, th, lt, ms, h, cUpdatedTime, nil
 }
 
 func GetEvacuationBeneficiariesData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.EvacuationRecord, error) {
@@ -92,7 +93,7 @@ func GetEvacuationBeneficiariesData(apiEndpoint string, params GetBeneficiariesD
 	return records, nil
 }
 
-func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.MainShelterRecord, error) {
+func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.MainShelterRecord, time.Time, error) {
 
 	url := strings.Builder{}
 
@@ -113,7 +114,7 @@ func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) (
 	resp, err := http.Get(url.String())
 
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
 	defer resp.Body.Close()
@@ -125,10 +126,16 @@ func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) (
 	err = w.Decode(&records)
 
 	if err != nil {
-		return nil, fmt.Errorf("error decoding response json: %w", err)
+		return nil, time.Time{}, fmt.Errorf("error decoding response json: %w", err)
 	}
 
-	return records, nil
+	cUpdatedTime, err := time.Parse(time.DateTime, resp.Header.Get("Last-Modified"))
+
+	if err != nil {
+		return nil, time.Time{}, fmt.Errorf("error getting cache update time: %w", err)
+	}
+
+	return records, cUpdatedTime, nil
 }
 
 func GetTransitHubData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.TransitHubRecord, error) {
