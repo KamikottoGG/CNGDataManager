@@ -22,7 +22,7 @@ type TransitHubRecord struct {
 	LastName               string              `json:"last_name"`               // Прізвище
 	FirstName              string              `json:"first_name"`              // Ім'я
 	MiddleName             NullString          `json:"middle_name"`             // По батькові
-	Gender                 string              `json:"gender"`                  // Стать
+	Sex                    BeneficiarySex      `json:"sex"`                     // Стать
 	BirthDate              DateOnly            `json:"birth_date"`              // Дата народження
 	Age                    int                 `json:"age"`                     // Вік
 	TaxID                  NullString          `json:"tax_id"`                  // ІПН
@@ -32,7 +32,7 @@ type TransitHubRecord struct {
 	RegistrationSettlement NullString          `json:"registration_settlement"` // Прописка: Нас пункт
 	RegistrationAddress    NullString          `json:"registration_address"`    // Прописка: Адреса
 	Phone                  NullString          `json:"phone"`                   // Телефон
-	Disability             NullString          `json:"disability"`              // Інвалідність (так/ні)
+	Disability             bool                `json:"disability"`              // Інвалідність (так/ні)
 	Category               NullString          `json:"category"`                // Категорія/коротка інформація про осіб
 	FurtherAccommodation   NullString          `json:"further_accommodation"`   // Подальше розміщення
 	PlannedDepartureDate   DateOnly            `json:"planned_departure_date"`  // Планова дата виїзду
@@ -47,7 +47,10 @@ func (t *TransitHubRecord) MapObject(object map[string]string) error {
 	t.ResidenceStatus = get("Статус проживання")
 	t.LastName = get("Прізвище")
 	t.FirstName = get("Ім'я")
-	t.Gender = get("Стать")
+
+	if t.Sex, err = ParseSex(get("Стать")); err != nil {
+		return fmt.Errorf("sex: %w", err)
+	}
 
 	if t.ArrivalDate, err = ParseSheetDate(get("Дата прибуття")); err != nil {
 		return fmt.Errorf("arrival date: %w", err)
@@ -95,7 +98,7 @@ func (t *TransitHubRecord) MapObject(object map[string]string) error {
 	t.RegistrationAddress = NullString(get("Прописка: Адреса"))
 
 	t.Phone = NullString(get("Телефон"))
-	t.Disability = NullString(get("Інвалідність (так/ні)"))
+	t.Disability = ParseYesNo(get("Інвалідність (так/ні)"))
 	t.Category = NullString(get("Категорія/коротка інформація про осіб"))
 	t.FurtherAccommodation = NullString(get("Подальше розміщення"))
 	t.Needs = NullString(get("Потреби"))
@@ -111,6 +114,10 @@ func FilterTransitHubValues(values []map[string]string) []map[string]string {
 			continue
 		}
 		if len(strings.TrimSpace(value["Ім'я"])) == 0 {
+			continue
+		}
+
+		if len(strings.TrimSpace(value["Стать"])) == 0 {
 			continue
 		}
 

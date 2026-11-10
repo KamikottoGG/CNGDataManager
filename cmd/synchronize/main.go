@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 
 	"google.golang.org/api/option"
 	gsheets "google.golang.org/api/sheets/v4"
@@ -63,11 +64,15 @@ func main() {
 		log.Fatal("MAIN_SHELTER_CACHE_JSON_FILE_PATH environment variable not set")
 	}
 
+	mainShelterJson += ".tmp"
+
 	evacuationJsonPath := os.Getenv("EVACUATION_CACHE_JSON_FILE_PATH")
 
 	if evacuationJsonPath == "" {
 		log.Fatal("EVACUATION_CACHE_JSON_FILE_PATH environment variable not set")
 	}
+
+	evacuationJsonPath += ".tmp"
 
 	transitHubJsonPath := os.Getenv("TRANSIT_HUB_CACHE_JSON_FILE_PATH")
 
@@ -75,17 +80,23 @@ func main() {
 		log.Fatal("TRANSIT_HUB_CACHE_JSON_FILE_PATH environment variable not set")
 	}
 
+	transitHubJsonPath += ".tmp"
+
 	hotlineJsonPath := os.Getenv("HOTLINE_CACHE_JSON_FILE_PATH")
 
 	if hotlineJsonPath == "" {
 		log.Fatal("HOTLINE_CACHE_JSON_FILE_PATH environment variable not set")
 	}
 
+	hotlineJsonPath += ".tmp"
+
 	localTransportationsJsonPath := os.Getenv("LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH")
 
 	if localTransportationsJsonPath == "" {
 		log.Fatal("LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH environment variable not set")
 	}
+
+	localTransportationsJsonPath += ".tmp"
 
 	opts := []option.ClientOption{
 		option.WithAuthCredentialsFile(
@@ -157,5 +168,23 @@ func main() {
 
 	if err != nil {
 		log.Fatal("[X]", "[Error while saving hotline data]", err)
+	}
+
+	pathes := []string{
+		evacuationJsonPath,
+		transitHubJsonPath,
+		hotlineJsonPath,
+		localTransportationsJsonPath,
+		mainShelterJson,
+	}
+
+	for _, p := range pathes {
+
+		n := strings.ReplaceAll(p, ".tmp", "")
+
+		err = os.Rename(p, n)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

@@ -73,9 +73,9 @@ func ParseYesNo(s string) bool {
 
 func ParseSex(s string) (BeneficiarySex, error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "чоловіча", "чоловік", "ч", "м", "male", "man":
+	case "чоловіча", "чоловік", "ч", "м", "male", "man", "х":
 		return MALE, nil
-	case "жіноча", "жінка", "ж", "f", "female":
+	case "жіноча", "жінка", "ж", "f", "female", "д":
 		return FEMALE, nil
 	}
 	return "", fmt.Errorf("unknown sex value %q", s)

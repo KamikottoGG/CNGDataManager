@@ -1,0 +1,13 @@
+###
+GET http://localhost:8080/evacuation?startDate=01-11-2026&endDate=01-11-2026
+
+###
+GET http://localhost:8080/hotline?startDate=01-10-2026
+
+###
+GET http://localhost:8080/transportations?startDate=01-11-2026
+
+###
+GET http://localhost:8080/transit?startDate=01-11-2026
+###
+GET http://localhost:8080/shelter?startDate=01-11-2026

@@ -18,7 +18,7 @@ type LocalTransportationRecord struct {
 	MiddleName      NullString          `json:"middle_name"`      // По батькові
 	BirthDate       DateOnly            `json:"birth_date"`       // Дата народження [ДД/ММ/РРРР]
 	Age             int                 `json:"age"`              // Вік
-	Gender          string              `json:"gender"`           // Стать
+	Sex             BeneficiarySex      `json:"sex"`              // Стать
 	Disability      bool                `json:"disability"`       // Інвалідність (так/ні)
 	Passport        BeneficiaryPassport `json:"passport"`         // Паспорт
 	TaxID           NullString          `json:"tax_id"`           // ІПН
@@ -39,7 +39,10 @@ func (l *LocalTransportationRecord) MapObject(object map[string]string) error {
 
 	l.LastName = get("Прізвище")
 	l.FirstName = get("Ім'я")
-	l.Gender = get("Стать")
+
+	if l.Sex, err = ParseSex(get("Стать")); err != nil {
+		return fmt.Errorf("sex: %w", err)
+	}
 
 	l.InformedConsent = ParseYesNo(get("Надаю інформо-вану згоду (так/ні)"))
 	l.Disability = ParseYesNo(get("Інвалідність (так/ні)"))

@@ -11,23 +11,23 @@ import (
 )
 
 type MainShelterRecord struct {
-	AddedBy              string     `json:"added_by"`              // Внес дані
-	ArrivalDate          DateOnly   `json:"arrival_date"`          // Дата прибуття (формат YYYY-MM-DD или DD.MM.YYYY)
-	VPOStatus            string     `json:"vpo_status"`            // Статус ВПО
-	IsTransit            bool       `json:"is_transit"`            // Транзит (true/false)
-	LastName             string     `json:"last_name"`             // Прізвище
-	FirstName            string     `json:"first_name"`            // Ім'я
-	MiddleName           NullString `json:"middle_name"`           // По батькові (может отсутствовать -> null)
-	BirthDate            DateOnly   `json:"birth_date"`            // Дата народження
-	Age                  int        `json:"age"`                   // Вік
-	Gender               string     `json:"gender"`                // Стать
-	Category             string     `json:"category"`              // Категорія
-	Disability           NullString `json:"disability"`            // Інвалідність (указатель, если null/нет)
-	EvacuatedFromTown    NullString `json:"evacuated_from_town"`   // Населений пункт звідки евакуювали
-	EvacuatedFromRegion  NullString `json:"evacuated_from_region"` // Область звідки евакуювали
-	FurtherAccommodation NullString `json:"further_accommodation"` // Подальше розміщення
-	TaxID                NullString `json:"tax_id"`                // ІПН (может быть пустым или содержать буквы для отказников)
-	Phone                NullString `json:"phone"`                 // Телефон
+	AddedBy              string         `json:"added_by"`              // Внес дані
+	ArrivalDate          DateOnly       `json:"arrival_date"`          // Дата прибуття (формат YYYY-MM-DD или DD.MM.YYYY)
+	VPOStatus            string         `json:"vpo_status"`            // Статус ВПО
+	IsTransit            bool           `json:"is_transit"`            // Транзит (true/false)
+	LastName             string         `json:"last_name"`             // Прізвище
+	FirstName            string         `json:"first_name"`            // Ім'я
+	MiddleName           NullString     `json:"middle_name"`           // По батькові (может отсутствовать -> null)
+	BirthDate            DateOnly       `json:"birth_date"`            // Дата народження
+	Age                  int            `json:"age"`                   // Вік
+	Sex                  BeneficiarySex `json:"sex"`                   // Стать
+	Category             string         `json:"category"`              // Категорія
+	Disability           bool           `json:"disability"`            // Інвалідність (указатель, если null/нет)
+	EvacuatedFromTown    NullString     `json:"evacuated_from_town"`   // Населений пункт звідки евакуювали
+	EvacuatedFromRegion  NullString     `json:"evacuated_from_region"` // Область звідки евакуювали
+	FurtherAccommodation NullString     `json:"further_accommodation"` // Подальше розміщення
+	TaxID                NullString     `json:"tax_id"`                // ІПН (может быть пустым или содержать буквы для отказников)
+	Phone                NullString     `json:"phone"`                 // Телефон
 	Passport             BeneficiaryPassport
 	FamilyComposition    NullString `json:"family_composition"`   // Склад сім'ї
 	RegistrationAddress  NullString `json:"registration_address"` // Адреса реєстрації
@@ -45,7 +45,11 @@ func (m *MainShelterRecord) MapObject(object map[string]string) error {
 	m.VPOStatus = get("Статус ВПО")
 	m.LastName = get("Прізвище")
 	m.FirstName = get("Ім'я")
-	m.Gender = get("Стать")
+
+	if m.Sex, err = ParseSex(get("Стать")); err != nil {
+		return fmt.Errorf("sex: %w", err)
+	}
+
 	m.Category = get("Категорія")
 	m.Status = get("Статус")
 
@@ -70,7 +74,7 @@ func (m *MainShelterRecord) MapObject(object map[string]string) error {
 	}
 
 	m.MiddleName = NullString(get("По батькові"))
-	m.Disability = NullString(get("Інвалідність"))
+	m.Disability = ParseYesNo(get("Інвалідність"))
 	m.EvacuatedFromTown = NullString(get("Населений пункт звідки евакуювали"))
 	m.EvacuatedFromRegion = NullString(get("Область звідки евакуювали"))
 	m.FurtherAccommodation = NullString(get("Подальше розміщення"))
