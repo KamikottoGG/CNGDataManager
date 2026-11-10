@@ -102,12 +102,23 @@ func bold(text string) string {
 	return "<b>" + text + "</b>"
 }
 
-func renderEvacuationSection(sb *strings.Builder, records []sheets.EvacuationRecord) {
+func renderEvacuationSection(sb *strings.Builder, records []sheets.EvacuationRecord, tripRecords []sheets.VehicleTripRecord) {
 	writeHeader(sb, "ЕВАКУАЦІЯ")
 
 	dis := GetEvacuationBeneficiariesDisaggregation(records)
 
-	sb.WriteString("Кількість евакуаційних рейсів: NaN")
+	evacuationTrips := 0
+
+	for _, tripRecord := range tripRecords {
+		if strings.ToLower(string(tripRecord.TripType)) != "евакуація" {
+			continue
+		}
+
+		evacuationTrips++
+	}
+
+	sb.WriteString("Кількість евакуаційних рейсів: ")
+	sb.WriteString(strconv.Itoa(evacuationTrips))
 	writeSection(sb, "", dis, "Всього евакуйовано ")
 
 	geoDis := GetEvacuationGeoDisaggregation(records)
@@ -264,6 +275,7 @@ func BuildFullReportText(
 	transitRecords []sheets.TransitHubRecord,
 	allTransitRecords []sheets.TransitHubRecord,
 	transportationsDisaggregation []sheets.LocalTransportationRecord,
+	vehicleTripRecords []sheets.VehicleTripRecord,
 	cacheUpdateTime time.Time,
 ) string {
 
@@ -273,7 +285,7 @@ func BuildFullReportText(
 
 	writeReportHeader(&sb, startDate, endDate, cacheUpdateTime)
 
-	renderEvacuationSection(&sb, evacuationRecords)
+	renderEvacuationSection(&sb, evacuationRecords, vehicleTripRecords)
 
 	renderMainShelterSection(&sb, shelterRecords, allShelterRecords)
 

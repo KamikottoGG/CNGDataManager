@@ -167,19 +167,25 @@ func main() {
 			return fmt.Errorf("error in getting all data: %v", err)
 		}
 
-		allms, _, err := utils.GetMainShelterData(apiBase, utils.GetBeneficiariesDataParams{})
+		allms, _, err := utils.GetMainShelterRecords(apiBase, utils.GetBeneficiariesDataParams{})
 
 		if err != nil {
 			return fmt.Errorf("error in getting all main shelter data: %v", err)
 		}
 
-		allTr, err := utils.GetTransitHubData(apiBase, utils.GetBeneficiariesDataParams{})
+		allTr, err := utils.GetTransitHubRecords(apiBase, utils.GetBeneficiariesDataParams{})
 
 		if err != nil {
 			return fmt.Errorf("error in getting all transit hub data: %v", err)
 		}
 
-		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, cUpdateTime),
+		vtr, err := utils.GetVehicleTripRecords(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting vehicle trips data: %v", err)
+		}
+
+		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, vtr, cUpdateTime),
 			&tele.SendOptions{
 				ParseMode: tele.ModeHTML,
 			}); err != nil {

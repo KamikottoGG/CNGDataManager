@@ -23,30 +23,30 @@ func GetAllData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets
 	error) {
 	var err error
 
-	e, err := GetEvacuationBeneficiariesData(apiEndpoint, params)
+	e, err := GetEvacuationBeneficiariesRecords(apiEndpoint, params)
 
 	if err != nil {
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting evacuation beneficiaries data: %w", err)
 	}
 
-	th, err := GetTransitHubData(apiEndpoint, params)
+	th, err := GetTransitHubRecords(apiEndpoint, params)
 
 	if err != nil {
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting transit hub beneficiaries data: %w", err)
 	}
 
-	lt, err := GetLocalTransportationsData(apiEndpoint, params)
+	lt, err := GetLocalTransportationsRecords(apiEndpoint, params)
 
 	if err != nil {
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting local transportations beneficiaries data: %w", err)
 	}
 
-	ms, cUpdatedTime, err := GetMainShelterData(apiEndpoint, params)
+	ms, cUpdatedTime, err := GetMainShelterRecords(apiEndpoint, params)
 	if err != nil {
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting main shelter beneficiaries data: %w", err)
 	}
 
-	h, err := GetHotlineData(apiEndpoint, params)
+	h, err := GetHotlineRecords(apiEndpoint, params)
 	if err != nil {
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting hotline beneficiaries data: %w", err)
 	}
@@ -54,7 +54,7 @@ func GetAllData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets
 	return e, th, lt, ms, h, cUpdatedTime, nil
 }
 
-func GetEvacuationBeneficiariesData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.EvacuationRecord, error) {
+func GetEvacuationBeneficiariesRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.EvacuationRecord, error) {
 
 	url := strings.Builder{}
 
@@ -93,7 +93,7 @@ func GetEvacuationBeneficiariesData(apiEndpoint string, params GetBeneficiariesD
 	return records, nil
 }
 
-func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.MainShelterRecord, time.Time, error) {
+func GetMainShelterRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.MainShelterRecord, time.Time, error) {
 
 	url := strings.Builder{}
 
@@ -138,7 +138,7 @@ func GetMainShelterData(apiEndpoint string, params GetBeneficiariesDataParams) (
 	return records, cUpdatedTime, nil
 }
 
-func GetTransitHubData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.TransitHubRecord, error) {
+func GetTransitHubRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.TransitHubRecord, error) {
 
 	url := strings.Builder{}
 
@@ -177,7 +177,46 @@ func GetTransitHubData(apiEndpoint string, params GetBeneficiariesDataParams) ([
 	return records, nil
 }
 
-func GetLocalTransportationsData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.LocalTransportationRecord, error) {
+func GetVehicleTripRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.VehicleTripRecord, error) {
+
+	url := strings.Builder{}
+
+	url.WriteString(apiEndpoint)
+	url.WriteString("/vehicle-trip?")
+
+	if !params.DateStart.IsZero() {
+		url.WriteString("startDate=")
+		url.WriteString(params.DateStart.Format("02-01-2006"))
+		url.WriteString("&")
+	}
+
+	if !params.DateEnd.IsZero() {
+		url.WriteString("endDate=")
+		url.WriteString(params.DateEnd.Format("02-01-2006"))
+	}
+
+	resp, err := http.Get(url.String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	records := []sheets.VehicleTripRecord{}
+
+	w := json.NewDecoder(resp.Body)
+
+	err = w.Decode(&records)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func GetLocalTransportationsRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.LocalTransportationRecord, error) {
 
 	url := strings.Builder{}
 
@@ -216,7 +255,7 @@ func GetLocalTransportationsData(apiEndpoint string, params GetBeneficiariesData
 	return records, nil
 }
 
-func GetHotlineData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.HotlineCallRecord, error) {
+func GetHotlineRecords(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.HotlineCallRecord, error) {
 
 	url := strings.Builder{}
 
