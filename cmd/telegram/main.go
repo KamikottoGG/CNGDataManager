@@ -61,12 +61,17 @@ func main() {
 	createRawWeeklyReportMenu := tele.ReplyMarkup{}
 
 	btnCreateFullWeeklyReport := createRawWeeklyReportMenu.Data("Щотижневий звіт", "weekly_report_full")
+	btnCreateFullMontlyReport := createRawWeeklyReportMenu.Data("Щомісячний звіт", "monthly_report_full")
+	btnCreateFullCurrentMonthReport := createRawWeeklyReportMenu.Data("Цей місяць", "current_month_report_full")
+	btnCreateFullReport := createRawWeeklyReportMenu.Data("Увесь час", "all_report_full")
 
 	//btnCreateRawWeeklyReport := createRawWeeklyReportMenu.Data("Сгенерувати звіт(малий)", "weekly_report_raw")
 
 	createRawWeeklyReportMenu.Inline(
 		createRawWeeklyReportMenu.Row(btnCreateFullWeeklyReport),
-		//createRawWeeklyReportMenu.Row(btnCreateRawWeeklyReport),
+		createRawWeeklyReportMenu.Row(btnCreateFullMontlyReport),
+		createRawWeeklyReportMenu.Row(btnCreateFullCurrentMonthReport),
+		createRawWeeklyReportMenu.Row(btnCreateFullReport),
 	)
 
 	bot.Handle("Сгенерувати звіт 📊", func(c tele.Context) error {
@@ -196,5 +201,166 @@ func main() {
 		return nil
 	})
 
+	bot.Handle(&btnCreateFullCurrentMonthReport, func(c tele.Context) error {
+
+		if err := c.Respond(&tele.CallbackResponse{}); err != nil {
+			return err
+		}
+
+		if err := c.Edit("Генерую звіт..."); err != nil {
+			return err
+		}
+
+		now := time.Now()
+		currentYear, currentMonth, _ := now.Date()
+		currentLocation := now.Location()
+
+		firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+		params := utils.GetBeneficiariesDataParams{
+			DateStart: firstOfMonth,
+			DateEnd:   lastOfMonth,
+		}
+
+		e, tr, lc, ms, h, cUpdateTime, err := utils.GetAllData(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting all data: %v", err)
+		}
+
+		allms, _, err := utils.GetMainShelterRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all main shelter data: %v", err)
+		}
+
+		allTr, err := utils.GetTransitHubRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all transit hub data: %v", err)
+		}
+
+		vtr, err := utils.GetVehicleTripRecords(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting vehicle trips data: %v", err)
+		}
+
+		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, vtr, cUpdateTime),
+			&tele.SendOptions{
+				ParseMode: tele.ModeHTML,
+			}); err != nil {
+			return fmt.Errorf("error in report generation: %v", err)
+		}
+		return nil
+	})
+
+	bot.Handle(&btnCreateFullMontlyReport, func(c tele.Context) error {
+
+		if err := c.Respond(&tele.CallbackResponse{}); err != nil {
+			return err
+		}
+
+		if err := c.Edit("Генерую звіт..."); err != nil {
+			return err
+		}
+
+		lastMonth := time.Now().AddDate(0, -1, 0)
+		currentYear, currentMonth, _ := lastMonth.Date()
+		currentLocation := lastMonth.Location()
+
+		firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+		params := utils.GetBeneficiariesDataParams{
+			DateStart: firstOfMonth,
+			DateEnd:   lastOfMonth,
+		}
+
+		e, tr, lc, ms, h, cUpdateTime, err := utils.GetAllData(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting all data: %v", err)
+		}
+
+		allms, _, err := utils.GetMainShelterRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all main shelter data: %v", err)
+		}
+
+		allTr, err := utils.GetTransitHubRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all transit hub data: %v", err)
+		}
+
+		vtr, err := utils.GetVehicleTripRecords(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting vehicle trips data: %v", err)
+		}
+
+		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, vtr, cUpdateTime),
+			&tele.SendOptions{
+				ParseMode: tele.ModeHTML,
+			}); err != nil {
+			return fmt.Errorf("error in report generation: %v", err)
+		}
+		return nil
+	})
+
+	bot.Handle(&btnCreateFullReport, func(c tele.Context) error {
+
+		if err := c.Respond(&tele.CallbackResponse{}); err != nil {
+			return err
+		}
+
+		if err := c.Edit("Генерую звіт..."); err != nil {
+			return err
+		}
+
+		params := utils.GetBeneficiariesDataParams{
+			DateStart: time.Date(2000, 1, 1, 0, 0, 0, 0, time.Now().Location()),
+			DateEnd:   time.Now(),
+		}
+
+		e, tr, lc, ms, h, cUpdateTime, err := utils.GetAllData(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting all data: %v", err)
+		}
+
+		allms, _, err := utils.GetMainShelterRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all main shelter data: %v", err)
+		}
+
+		allTr, err := utils.GetTransitHubRecords(apiBase, utils.GetBeneficiariesDataParams{})
+
+		if err != nil {
+			return fmt.Errorf("error in getting all transit hub data: %v", err)
+		}
+
+		vtr, err := utils.GetVehicleTripRecords(apiBase, params)
+
+		if err != nil {
+			return fmt.Errorf("error in getting vehicle trips data: %v", err)
+		}
+
+		if err := c.Edit(utils.BuildFullReportText(params.DateStart, params.DateEnd, h, e, ms, allms, tr, allTr, lc, vtr, cUpdateTime),
+			&tele.SendOptions{
+				ParseMode: tele.ModeHTML,
+			}); err != nil {
+			return fmt.Errorf("error in report generation: %v", err)
+		}
+		return nil
+	})
+
 	bot.Start()
 }
+
+// TODO: Добавить проверку по людям на эвакуацию, и локальные перевозки через сравнение их с количеством людей отчёта по машинам
+// TODO: Добавить защиту для ограничения пользователей

@@ -33,7 +33,7 @@ type MainShelterRecord struct {
 	RegistrationAddress  NullString `json:"registration_address"` // Адреса реєстрації
 	Needs                NullString `json:"needs"`                // Потреби
 	Status               string     `json:"status"`               // Статус (напр. "Проживает", "Выехал")
-	DepartureDate        NullString `json:"departure_date"`       // Дата виїзду (если еще не выехал -> null)
+	DepartureDate        DateOnly   `json:"departure_date"`       // Дата виїзду (если еще не выехал -> null)
 }
 
 func (m *MainShelterRecord) MapObject(object map[string]string) error {
@@ -83,7 +83,10 @@ func (m *MainShelterRecord) MapObject(object map[string]string) error {
 	m.FamilyComposition = NullString(get("Склад сім'ї"))
 	m.RegistrationAddress = NullString(get("Адреса реєстрації"))
 	m.Needs = NullString(get("Потреби"))
-	m.DepartureDate = NullString(get("Дата виїзду"))
+
+	if m.DepartureDate, err = ParseSheetDate(get("Дата виїзду")); err != nil {
+		return fmt.Errorf("departure date: %w", err)
+	}
 
 	m.Passport.Number = NullString(get("Серія та номер паспорту"))
 	m.Passport.Issuer = NullString(get("Ким виданий"))
@@ -139,7 +142,7 @@ func CacheMainShelterData(service *sheets.Service, spreadSheet *sheets.Spreadshe
 
 	log.Printf("[?] Starts work with sheet. Name: %s ", sheet.Properties.Title)
 
-	rows, err := service.Spreadsheets.Values.Get(spreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:W").Do()
+	rows, err := service.Spreadsheets.Values.Get(spreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:Z").Do()
 
 	if err != nil {
 		return err

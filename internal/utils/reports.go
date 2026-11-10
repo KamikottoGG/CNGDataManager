@@ -2,7 +2,6 @@ package utils
 
 import (
 	"CNGDataManager/internal/google/sheets"
-	"fmt"
 	"html"
 	"strconv"
 	"strings"
@@ -95,9 +94,21 @@ func writeHeader(sb *strings.Builder, header string) {
 
 func writeReportHeader(sb *strings.Builder, startDate, endDate, cacheUpdateTime time.Time) {
 	sb.WriteString("<b>Звіт CNG: ")
-	sb.WriteString(startDate.Format("02.01"))
-	sb.WriteString(" - ")
-	sb.WriteString(endDate.Format("02.01"))
+
+	format := "02.01"
+
+	if startDate.Year() != endDate.Year() {
+		format = "02.01.2006"
+	}
+
+	if startDate.Year() == 2000 {
+		sb.WriteString("Увесь час")
+	} else {
+		sb.WriteString(startDate.Format(format))
+		sb.WriteString(" - ")
+		sb.WriteString(endDate.Format(format))
+	}
+
 	sb.WriteString("</b> (<i>оновл. ")
 	sb.WriteString(cacheUpdateTime.Format("15:04"))
 	sb.WriteString("</i>)\n\n")
@@ -167,13 +178,9 @@ func renderMainShelterSection(sb *strings.Builder, records, allRecords []sheets.
 	depResidents := make([]sheets.MainShelterRecord, 0)
 
 	for _, record := range allRecords {
-		if strings.TrimSpace(string(record.DepartureDate)) == "" {
-			continue
-		}
+		depDate := time.Time(record.DepartureDate)
 
-		depDate, err := time.Parse("2006-01-02", string(record.DepartureDate))
-		if err != nil {
-			fmt.Printf("Error parsing departure date %s: %v\n", record.DepartureDate, err)
+		if depDate.IsZero() {
 			continue
 		}
 
