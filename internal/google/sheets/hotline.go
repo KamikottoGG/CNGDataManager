@@ -133,6 +133,7 @@ func CacheHotlineData(service *sheets.Service, spreadSheet *sheets.Spreadsheet, 
 	rowsAffected := 0
 
 	for i, sheet := range spreadSheet.Sheets {
+		time.Sleep(1200 * time.Millisecond)
 		log.Printf("[%d/%d] Starts work with sheet. Name: %s ", i+1, len(spreadSheet.Sheets), sheet.Properties.Title)
 
 		rows, err := service.Spreadsheets.Values.Get(spreadSheet.SpreadsheetId, sheet.Properties.Title+"!A1:W").Do()

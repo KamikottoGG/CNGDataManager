@@ -124,6 +124,7 @@ func CacheMainShelterData(service *sheets.Service, spreadSheet *sheets.Spreadshe
 
 	sheet, err := func() (*sheets.Sheet, error) {
 		for _, sheet := range spreadSheet.Sheets {
+			time.Sleep(1200 * time.Millisecond)
 			if sheet.Properties.Title == "Form_Responses" {
 				return sheet, nil
 			}

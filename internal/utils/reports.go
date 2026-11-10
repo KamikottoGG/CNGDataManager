@@ -55,7 +55,7 @@ func BuildReportTextRaw(
 	evacuationDisaggregation,
 	shelterDisaggregation,
 	transitDisaggregation,
-	transportationsDisaggregation BeneficiariesDisaggregation,
+	localTransportationsDisaggregation BeneficiariesDisaggregation,
 ) string {
 	var builder strings.Builder
 	builder.Grow(1024)
@@ -69,7 +69,7 @@ func BuildReportTextRaw(
 	writeSection(&builder, "Евакуація:", evacuationDisaggregation, "")
 	writeSection(&builder, "Прихисток:", shelterDisaggregation, "")
 	writeSection(&builder, "Транзитний пункт:", transitDisaggregation, "")
-	writeSection(&builder, "Перевезення:", transportationsDisaggregation, "")
+	writeSection(&builder, "Перевезення:", localTransportationsDisaggregation, "")
 
 	return strings.TrimRight(builder.String(), "\n")
 }
@@ -217,7 +217,7 @@ func renderTransitHubRemainsSection(sb *strings.Builder, records []sheets.Transi
 }
 
 func renderLocalTransportationsSection(sb *strings.Builder, records []sheets.LocalTransportationRecord) {
-	dis := GetTransportationsBeneficiariesDisaggregation(records)
+	dis := GetLocalTransportationsBeneficiariesDisaggregation(records)
 	writeSection(sb, "<b>ЛОКАЛЬНІ ПЕРЕВЕЗЕННЯ</b>", dis, "Людей перевезено ")
 
 }

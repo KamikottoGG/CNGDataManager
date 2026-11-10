@@ -120,7 +120,7 @@ func main() {
 
 		thd := utils.GetTransitHubBeneficiariesDisaggregation(th)
 
-		lcd := utils.GetTransportationsBeneficiariesDisaggregation(lc)
+		lcd := utils.GetLocalTransportationsBeneficiariesDisaggregation(lc)
 
 		msd := utils.GetMainShelterBeneficiariesDisaggregation(ms)
 

@@ -35,10 +35,10 @@ func GetAllData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets
 		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting transit hub beneficiaries data: %w", err)
 	}
 
-	lt, err := GetTransportationsData(apiEndpoint, params)
+	lt, err := GetLocalTransportationsData(apiEndpoint, params)
 
 	if err != nil {
-		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting transportations beneficiaries data: %w", err)
+		return nil, nil, nil, nil, nil, time.Time{}, fmt.Errorf("error getting local transportations beneficiaries data: %w", err)
 	}
 
 	ms, cUpdatedTime, err := GetMainShelterData(apiEndpoint, params)
@@ -177,12 +177,12 @@ func GetTransitHubData(apiEndpoint string, params GetBeneficiariesDataParams) ([
 	return records, nil
 }
 
-func GetTransportationsData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.LocalTransportationRecord, error) {
+func GetLocalTransportationsData(apiEndpoint string, params GetBeneficiariesDataParams) ([]sheets.LocalTransportationRecord, error) {
 
 	url := strings.Builder{}
 
 	url.WriteString(apiEndpoint)
-	url.WriteString("/transportations?")
+	url.WriteString("/local-transportations?")
 
 	if !params.DateStart.IsZero() {
 		url.WriteString("startDate=")

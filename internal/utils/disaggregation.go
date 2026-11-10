@@ -126,7 +126,7 @@ func GetMainShelterBeneficiariesDisaggregation(records []sheets.MainShelterRecor
 	return disaggregation
 }
 
-func GetTransportationsBeneficiariesDisaggregation(records []sheets.LocalTransportationRecord) BeneficiariesDisaggregation {
+func GetLocalTransportationsBeneficiariesDisaggregation(records []sheets.LocalTransportationRecord) BeneficiariesDisaggregation {
 	disaggregation := BeneficiariesDisaggregation{}
 
 	for _, r := range records {

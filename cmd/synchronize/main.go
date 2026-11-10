@@ -49,6 +49,12 @@ func main() {
 		log.Fatal("LOCAL_TRANSPORTATION_SPREADSHEET_ID environment variable not set")
 	}
 
+	vtid := os.Getenv("VEHICLE_TRIP_SPREADSHEET_ID")
+
+	if vtid == "" {
+		log.Fatal("VEHICLE_TRIP_SPREADSHEET_ID environment variable not set")
+	}
+
 	//LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH=./cache/local_transportations.json
 
 	//
@@ -97,6 +103,14 @@ func main() {
 	}
 
 	localTransportationsJsonPath += ".tmp"
+
+	vehicleTripJsonPath := os.Getenv("VEHICLE_TRIP_CACHE_JSON_FILE")
+
+	if vehicleTripJsonPath == "" {
+		log.Fatal("VEHICLE_TRIP_CACHE_JSON_FILE environment variable not set")
+	}
+
+	vehicleTripJsonPath += ".tmp"
 
 	opts := []option.ClientOption{
 		option.WithAuthCredentialsFile(
@@ -170,12 +184,27 @@ func main() {
 		log.Fatal("[X]", "[Error while saving hotline data]", err)
 	}
 
+	vehicleTripSpreadsheet, err := sheetsService.Spreadsheets.Get(vtid).Do()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = sheets.CacheVehicleTripData(sheetsService, vehicleTripSpreadsheet, vehicleTripJsonPath)
+
+	if err != nil {
+		log.Fatal("[X]", "[Error while saving vehicle trips data]", err)
+	}
+
+	// CacheVehicleTripData
+
 	pathes := []string{
 		evacuationJsonPath,
 		transitHubJsonPath,
 		hotlineJsonPath,
 		localTransportationsJsonPath,
 		mainShelterJson,
+		vehicleTripJsonPath,
 	}
 
 	for _, p := range pathes {
