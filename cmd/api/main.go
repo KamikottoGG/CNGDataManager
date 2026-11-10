@@ -41,6 +41,12 @@ func main() {
 		log.Fatal("LOCAL_TRANSPORTATION_CACHE_JSON_FILE_PATH environment variable not set")
 	}
 
+	vehicleTripJsonPath := os.Getenv("VEHICLE_TRIP_CACHE_JSON_FILE")
+
+	if vehicleTripJsonPath == "" {
+		log.Fatal("VEHICLE_TRIP_CACHE_JSON_FILE environment variable not set")
+	}
+
 	http.HandleFunc("/evacuation", func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method != http.MethodGet {
@@ -402,6 +408,79 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Last-Modified", lastEdit.Format(time.DateTime))
 		if err := json.NewEncoder(w).Encode(respTransitData); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+	})
+
+	http.HandleFunc("/vehicle-trip", func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		query := r.URL.Query()
+
+		startDate := query.Get("startDate")
+		endDate := query.Get("endDate")
+
+		data, err := os.ReadFile(vehicleTripJsonPath)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		info, err := os.Stat(vehicleTripJsonPath)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var lastEdit = info.ModTime()
+
+		var tData []sheets.VehicleTripRecord
+		err = json.Unmarshal(data, &tData)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var respData = make([]sheets.VehicleTripRecord, 0, len(tData)/8)
+
+		startTime, err := time.Parse("02-01-2006", startDate)
+
+		if err != nil {
+			startTime = time.Date(1900, time.January, 1, 0, 0, 0, 0, time.UTC)
+		}
+
+		endTime, err := time.Parse("02-01-2006", endDate)
+		if err != nil {
+			endTime = time.Now()
+		} else {
+
+			endTime = endTime.Add(24*time.Hour - time.Nanosecond)
+		}
+
+		for _, record := range tData {
+
+			activityDate := time.Time(record.Date)
+
+			if activityDate.Before(startTime) || activityDate.After(endTime) {
+				continue
+			}
+
+			respData = append(respData, record)
+
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Last-Modified", lastEdit.Format(time.DateTime))
+		if err := json.NewEncoder(w).Encode(respData); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
