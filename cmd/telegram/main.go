@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v4"
@@ -24,6 +26,26 @@ func main() {
 		log.Fatal("API_BASE_URL environment variable not set")
 	}
 
+	adminIds := os.Getenv("ADMIN_IDS")
+
+	if adminIds == "" {
+		log.Fatal("ADMIN_IDS environment variable not set")
+	}
+
+	adminIdsSplit := strings.Split(adminIds, ",")
+
+	adminIdsInt := make([]int64, len(adminIdsSplit))
+
+	for _, s := range adminIdsSplit {
+		id, err := strconv.ParseInt(s, 10, 64)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		adminIdsInt = append(adminIdsInt, id)
+	}
+
 	settings := tele.Settings{
 		Token: botToken,
 		Poller: &tele.LongPoller{
@@ -36,6 +58,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	bot.Use(utils.AdminOnlyMiddleware(adminIdsInt...))
 
 	bot.Handle("/start", func(c tele.Context) error {
 
@@ -363,4 +387,3 @@ func main() {
 }
 
 // TODO: Добавить проверку по людям на эвакуацию, и локальные перевозки через сравнение их с количеством людей отчёта по машинам
-// TODO: Добавить защиту для ограничения пользователей
