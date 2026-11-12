@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CNGDataManager/internal/telegram"
 	"CNGDataManager/internal/utils"
 	"fmt"
 	"log"
@@ -51,6 +52,7 @@ func main() {
 		Poller: &tele.LongPoller{
 			Timeout: 10 * time.Second,
 		},
+		OnError: telegram.OnErrorHandler,
 	}
 
 	bot, err := tele.NewBot(settings)
@@ -59,7 +61,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot.Use(utils.AdminOnlyMiddleware(adminIdsInt...))
+	bot.Use(telegram.AdminOnlyMiddleware(adminIdsInt...))
+
+	states := make(map[int64]telegram.FSMState)
+	statesData := make(map[int64]map[string]string)
+
+	bot.Use(telegram.FSMMiddleware(states, statesData))
 
 	bot.Handle("/start", func(c tele.Context) error {
 
@@ -88,6 +95,7 @@ func main() {
 	btnCreateFullMontlyReport := createRawWeeklyReportMenu.Data("Щомісячний звіт", "monthly_report_full")
 	btnCreateFullCurrentMonthReport := createRawWeeklyReportMenu.Data("Цей місяць", "current_month_report_full")
 	btnCreateFullReport := createRawWeeklyReportMenu.Data("Увесь час", "all_report_full")
+	btnCreateOwnReport := createRawWeeklyReportMenu.Data("Свій проміжок", "own_report_full")
 
 	//btnCreateRawWeeklyReport := createRawWeeklyReportMenu.Data("Сгенерувати звіт(малий)", "weekly_report_raw")
 
@@ -96,6 +104,7 @@ func main() {
 		createRawWeeklyReportMenu.Row(btnCreateFullMontlyReport),
 		createRawWeeklyReportMenu.Row(btnCreateFullCurrentMonthReport),
 		createRawWeeklyReportMenu.Row(btnCreateFullReport),
+		createRawWeeklyReportMenu.Row(btnCreateOwnReport),
 	)
 
 	bot.Handle("Сгенерувати звіт 📊", func(c tele.Context) error {
@@ -107,59 +116,6 @@ func main() {
 				ReplyMarkup: &createRawWeeklyReportMenu,
 			})
 	})
-
-	//bot.Handle(&btnCreateRawWeeklyReport, func(c tele.Context) error {
-	//
-	//	if err := c.Respond(&tele.CallbackResponse{}); err != nil {
-	//		return err
-	//	}
-	//
-	//	if err := c.Edit("Генерую звіт..."); err != nil {
-	//		return err
-	//	}
-	//
-	//	now := time.Now()
-	//
-	//	weekday := int(now.Weekday())
-	//	if weekday == 0 {
-	//		weekday = 7
-	//	}
-	//
-	//	currentMonday := now.AddDate(0, 0, -weekday+1)
-	//
-	//	lastMonday := currentMonday.AddDate(0, 0, -7)
-	//
-	//	lastSunday := lastMonday.AddDate(0, 0, 6)
-	//
-	//	lastMonday = time.Date(lastMonday.Year(), lastMonday.Month(), lastMonday.Day(), 0, 0, 0, 0, now.Location())
-	//	lastSunday = time.Date(lastSunday.Year(), lastSunday.Month(), lastSunday.Day(), 0, 0, 0, 0, now.Location())
-	//
-	//	params := utils.GetBeneficiariesDataParams{
-	//		DateStart: lastMonday,
-	//		DateEnd:   lastSunday,
-	//	}
-	//
-	//	e, th, lc, ms, _, _, err := utils.GetAllData(apiBase, params)
-	//
-	//	if err != nil {
-	//		return fmt.Errorf("error in getting all data: %v", err)
-	//	}
-	//
-	//	ed := utils.GetEvacuationBeneficiariesDisaggregation(e)
-	//
-	//	thd := utils.GetTransitHubBeneficiariesDisaggregation(th)
-	//
-	//	lcd := utils.GetLocalTransportationsBeneficiariesDisaggregation(lc)
-	//
-	//	msd := utils.GetMainShelterBeneficiariesDisaggregation(ms)
-	//
-	//	if err := c.Edit(utils.BuildReportTextRaw(params.DateStart, params.DateEnd, ed, msd, thd, lcd), &tele.SendOptions{
-	//		ParseMode: tele.ModeHTML,
-	//	}); err != nil {
-	//		return fmt.Errorf("error in report generation: %v", err)
-	//	}
-	//	return nil
-	//})
 
 	bot.Handle(&btnCreateFullWeeklyReport, func(c tele.Context) error {
 
@@ -383,7 +339,38 @@ func main() {
 		return nil
 	})
 
+	cancelMenu := tele.ReplyMarkup{}
+
+	cancelBtn := cancelMenu.Data("Скасувати дію", "cancel")
+
+	cancelMenu.Inline(
+		cancelMenu.Row(
+			cancelBtn),
+	)
+
+	bot.Handle(&btnCreateOwnReport, func(c tele.Context) error {
+
+		if err := c.Respond(); err != nil {
+			return err
+		}
+
+		if err = c.Edit("Напишіть з якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> дд.мм.рррр \nНаприклад: <b><u>02.01.2006</u></b>",
+			&tele.SendOptions{ReplyMarkup: &cancelMenu, ParseMode: tele.ModeHTML}); err != nil {
+			return err
+		}
+
+		states[c.Sender().ID] = telegram.STATE_START_DATE
+
+		return nil
+	})
+
+	bot.Handle(tele.OnCallback, func(c tele.Context) error {
+		return nil
+	})
+
+	bot.Handle(tele.OnText, func(c tele.Context) error {
+		return nil
+	})
+
 	bot.Start()
 }
-
-// TODO: Добавить проверку по людям на эвакуацию, и локальные перевозки через сравнение их с количеством людей отчёта по машинам

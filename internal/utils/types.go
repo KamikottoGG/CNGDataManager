@@ -24,3 +24,14 @@ type BeneficiariesDisaggregation struct {
 func (b *BeneficiariesDisaggregation) Total() int {
 	return b.Boys.Total + b.Girls.Total + b.Men.Total + b.Women.Total + b.ElderlyMen.Total + b.ElderlyWomen.Total
 }
+
+//func IsEvacuationBeneficiariesCountSame(vehicleTripRecords []sheets.VehicleTripRecord, evacuationRecords []sheets.EvacuationRecord) bool{
+//
+//	vehicleEvacuatedCount := 0
+//
+//	for _, r := range vehicleTripRecords {
+//		vehicleEvacuatedCount += r.EvacueesCount
+//	}
+//
+//	return true
+//}
