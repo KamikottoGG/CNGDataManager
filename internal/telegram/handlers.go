@@ -16,7 +16,7 @@ func HandleStartDateInput(c tele.Context, stateData map[string]string, stateStor
 
 	if err != nil {
 
-		return c.Send("Увага! Дату не роспізнано.\nНапишіть з якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
+		return c.Send("Увага! Дату не розпізнано.\nНапишіть з якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
 			&tele.SendOptions{ParseMode: tele.ModeHTML})
 	}
 
@@ -41,7 +41,7 @@ func HandleEndDateInput(c tele.Context, stateData map[string]string, stateStorag
 	endTime, err := time.Parse("02.01.2006", c.Text())
 
 	if err != nil {
-		return c.Send("Увага! Дату не роспізнано.\nНапишіть ДО якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
+		return c.Send("Увага! Дату не розпізнано.\nНапишіть ДО якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
 			&tele.SendOptions{ParseMode: tele.ModeHTML})
 	}
 
