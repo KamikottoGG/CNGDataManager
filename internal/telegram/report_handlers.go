@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"CNGDataManager/internal/config"
 	"CNGDataManager/internal/utils"
 	"fmt"
 	"time"
@@ -10,14 +9,14 @@ import (
 )
 
 type ReportHandlersController struct {
-	Config       *config.TelegramBotConfig
+	ApiClient    BeneficiaryAPI
 	Keyboards    Keyboards
 	StateStorage StateStorage
 }
 
-func NewReportHandlersController(config *config.TelegramBotConfig, keyboards Keyboards, storage StateStorage) *ReportHandlersController {
+func NewReportHandlersController(apiClient BeneficiaryAPI, keyboards Keyboards, storage StateStorage) *ReportHandlersController {
 	return &ReportHandlersController{
-		Config:       config,
+		ApiClient:    apiClient,
 		Keyboards:    keyboards,
 		StateStorage: storage,
 	}
@@ -187,14 +186,15 @@ func (h *ReportHandlersController) HandleStartDateInput(c tele.Context, stateSes
 
 	if date.After(time.Now()) {
 		return c.Send("Увага! Дата пізніше ніж сьогодні, перевірте будь ласка правильність написання дати\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
-			&tele.SendOptions{ParseMode: tele.ModeHTML})
+			h.Keyboards.NewCancelReplyMarkup())
 	}
 
 	stateSession.Set("startDate", date)
 	stateSession.SetState(StateEndDate)
 
 	return c.Send("Напишіть ДО якої дати потрібно знегерувати звіт.\n\nУВАГА! Формат <b>обов'язкого</b> <b><u>дд.мм.рррр</u></b> \nНаприклад: <b><u>02.01.2006</u></b>",
-		&tele.SendOptions{ParseMode: tele.ModeHTML})
+		&tele.SendOptions{ParseMode: tele.ModeHTML},
+		h.Keyboards.NewCancelReplyMarkup())
 }
 
 func (h *ReportHandlersController) HandleEndDateInput(c tele.Context, stateSession *StateSession) error {
@@ -230,39 +230,37 @@ func (h *ReportHandlersController) HandleEndDateInput(c tele.Context, stateSessi
 
 	stateSession.Clear()
 
-	if err := c.Send(h.generateReportText(params)); err != nil {
+	reportText, err := h.generateReportText(params)
+	if err != nil {
+		return err
+	}
+	if err := c.EditOrReply(reportText); err != nil {
 		return fmt.Errorf("error in report generation: %v", err)
 	}
-
 	return nil
+
 }
 
 func (h *ReportHandlersController) generateReportText(params utils.GetBeneficiariesDataParams) (string, error) {
-	e, tr, lc, ms, hot, cUpdateTime, err := utils.GetAllData(h.Config.ApiBaseUrl, params)
+	reportData, err := h.ApiClient.GetAllData(params)
 
 	if err != nil {
 		return "", fmt.Errorf("error in getting all data: %v", err)
 	}
 
-	allms, _, err := utils.GetMainShelterRecords(h.Config.ApiBaseUrl, utils.GetBeneficiariesDataParams{})
+	allms, _, err := h.ApiClient.GetMainShelterRecords(utils.GetBeneficiariesDataParams{})
 
 	if err != nil {
 		return "", fmt.Errorf("error in getting all main shelter data: %v", err)
 	}
 
-	allTr, err := utils.GetTransitHubRecords(h.Config.ApiBaseUrl, utils.GetBeneficiariesDataParams{})
+	allTransit, _, err := h.ApiClient.GetTransitHubRecords(utils.GetBeneficiariesDataParams{})
 
 	if err != nil {
 		return "", fmt.Errorf("error in getting all transit hub data: %v", err)
 	}
 
-	vtr, err := utils.GetVehicleTripRecords(h.Config.ApiBaseUrl, params)
-
-	if err != nil {
-		return "", fmt.Errorf("error in getting vehicle trips data: %v", err)
-	}
-
-	fText := utils.BuildFullReportText(params.DateStart, params.DateEnd, hot, e, ms, allms, tr, allTr, lc, vtr, cUpdateTime)
+	fText := utils.BuildFullReportText(params.DateStart, params.DateEnd, reportData.Hotline, reportData.Evacuation, reportData.MainShelter, allms, reportData.TransitHub, allTransit, reportData.LocalTransportation, reportData.VehicleTrips, reportData.LastModified)
 
 	return fText, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"CNGDataManager/internal/config"
 	"CNGDataManager/internal/telegram"
+	"CNGDataManager/internal/utils"
 	"log"
 
 	"time"
@@ -28,9 +29,11 @@ func main() {
 		OnError:   telegram.OnErrorHandler,
 	}
 
+	apiClient := utils.NewAPIClient(telegramBotConfig.ApiBaseUrl)
+
 	localStatesStorage := telegram.NewLocalStateHandlerStorage()
 
-	c := telegram.NewHandlersController(telegramBotConfig, localStatesStorage)
+	c := telegram.NewHandlersController(telegramBotConfig, localStatesStorage, apiClient)
 
 	bot, err := tele.NewBot(settings)
 

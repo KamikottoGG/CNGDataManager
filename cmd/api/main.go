@@ -341,7 +341,7 @@ func main() {
 
 	})
 
-	http.HandleFunc("/transit", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/transit-hub", func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)

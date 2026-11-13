@@ -1,6 +1,8 @@
 package telegram
 
-import "CNGDataManager/internal/config"
+import (
+	"CNGDataManager/internal/config"
+)
 
 type HandlersController struct {
 	Config         *config.TelegramBotConfig
@@ -9,14 +11,14 @@ type HandlersController struct {
 	StateStorage   StateStorage
 }
 
-func NewHandlersController(config *config.TelegramBotConfig, storage StateStorage) *HandlersController {
+func NewHandlersController(config *config.TelegramBotConfig, storage StateStorage, api BeneficiaryAPI) *HandlersController {
 	c := HandlersController{
 		Config:       config,
 		Keyboards:    NewKeyboards(),
 		StateStorage: storage,
 	}
 
-	c.ReportHandlers = NewReportHandlersController(c.Config, c.Keyboards, storage)
+	c.ReportHandlers = NewReportHandlersController(api, c.Keyboards, storage)
 
 	return &c
 }
