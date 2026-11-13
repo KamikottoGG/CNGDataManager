@@ -12,17 +12,6 @@ import (
 	"time"
 )
 
-type ReportData struct {
-	Evacuation          []sheets.EvacuationRecord
-	TransitHub          []sheets.TransitHubRecord
-	AllTransitHub       []sheets.TransitHubRecord
-	LocalTransportation []sheets.LocalTransportationRecord
-	MainShelter         []sheets.MainShelterRecord
-	AllMainShelter      []sheets.MainShelterRecord
-	Hotline             []sheets.HotlineCallRecord
-	VehicleTrips        []sheets.VehicleTripRecord
-	LastModified        time.Time
-}
 type GetBeneficiariesDataParams struct {
 	DateStart time.Time
 	DateEnd   time.Time
@@ -66,6 +55,20 @@ func (c *APIClient) GetHotlineRecords(params GetBeneficiariesDataParams) ([]shee
 	return fetchRecords[sheets.HotlineCallRecord](c, "hotline", params)
 }
 
+type ReportData struct {
+	StartDate            time.Time
+	EndDate              time.Time
+	Hotline              []sheets.HotlineCallRecord
+	Evacuation           []sheets.EvacuationRecord
+	Shelter              []sheets.MainShelterRecord
+	AllShelter           []sheets.MainShelterRecord
+	TransitHub           []sheets.TransitHubRecord
+	AllTransitHub        []sheets.TransitHubRecord
+	LocalTransportations []sheets.LocalTransportationRecord
+	VehicleTrip          []sheets.VehicleTripRecord
+	CacheUpdateTime      time.Time
+}
+
 func (c *APIClient) GetAllData(params GetBeneficiariesDataParams) (ReportData, error) {
 	evac, _, err := c.GetEvacuationRecords(params)
 	if err != nil {
@@ -92,14 +95,28 @@ func (c *APIClient) GetAllData(params GetBeneficiariesDataParams) (ReportData, e
 		return ReportData{}, err
 	}
 
+	allShelter, _, err := c.GetMainShelterRecords(GetBeneficiariesDataParams{})
+	if err != nil {
+		return ReportData{}, err
+	}
+
+	trasitHub, _, err := c.GetTransitHubRecords(GetBeneficiariesDataParams{})
+	if err != nil {
+		return ReportData{}, err
+	}
+
 	return ReportData{
-		Evacuation:          evac,
-		TransitHub:          transit,
-		MainShelter:         shelter,
-		LocalTransportation: local,
-		Hotline:             hotline,
-		VehicleTrips:        vTrips,
-		LastModified:        lastEditTime,
+		Evacuation:           evac,
+		TransitHub:           transit,
+		Shelter:              shelter,
+		LocalTransportations: local,
+		Hotline:              hotline,
+		VehicleTrip:          vTrips,
+		CacheUpdateTime:      lastEditTime,
+		AllShelter:           allShelter,
+		AllTransitHub:        trasitHub,
+		StartDate:            params.DateStart,
+		EndDate:              params.DateEnd,
 	}, nil
 }
 

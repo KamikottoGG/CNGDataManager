@@ -298,27 +298,17 @@ func isDateInRange(targetDate time.Time, start, end time.Time) bool {
 }
 
 func BuildFullReportText(
-	startDate time.Time,
-	endDate time.Time,
-	hotlineRecords []sheets.HotlineCallRecord,
-	evacuationRecords []sheets.EvacuationRecord,
-	shelterRecords []sheets.MainShelterRecord,
-	allShelterRecords []sheets.MainShelterRecord,
-	transitRecords []sheets.TransitHubRecord,
-	allTransitRecords []sheets.TransitHubRecord,
-	transportationsDisaggregation []sheets.LocalTransportationRecord,
-	vehicleTripRecords []sheets.VehicleTripRecord,
-	cacheUpdateTime time.Time,
+	reportData *ReportData,
 ) string {
 	var sb strings.Builder
 	sb.Grow(2048)
 
-	writeReportHeader(&sb, startDate, endDate, cacheUpdateTime)
-	renderEvacuationSection(&sb, evacuationRecords, vehicleTripRecords)
-	renderMainShelterSection(&sb, shelterRecords, allShelterRecords, startDate, endDate)
-	renderTransitHubSection(&sb, transitRecords, allTransitRecords, startDate, endDate)
-	renderHotlineSection(&sb, hotlineRecords)
-	renderLocalTransportationsSection(&sb, transportationsDisaggregation)
+	writeReportHeader(&sb, reportData.StartDate, reportData.EndDate, reportData.CacheUpdateTime)
+	renderEvacuationSection(&sb, reportData.Evacuation, reportData.VehicleTrip)
+	renderMainShelterSection(&sb, reportData.Shelter, reportData.AllShelter, reportData.StartDate, reportData.EndDate)
+	renderTransitHubSection(&sb, reportData.TransitHub, reportData.AllTransitHub, reportData.StartDate, reportData.EndDate)
+	renderHotlineSection(&sb, reportData.Hotline)
+	renderLocalTransportationsSection(&sb, reportData.LocalTransportations)
 
 	return strings.TrimRight(sb.String(), "\n")
 }

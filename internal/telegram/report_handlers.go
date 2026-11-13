@@ -245,22 +245,10 @@ func (h *ReportHandlersController) generateReportText(params utils.GetBeneficiar
 	reportData, err := h.ApiClient.GetAllData(params)
 
 	if err != nil {
-		return "", fmt.Errorf("error in getting all data: %v", err)
+		return "", fmt.Errorf("error in getting report data: %v", err)
 	}
 
-	allms, _, err := h.ApiClient.GetMainShelterRecords(utils.GetBeneficiariesDataParams{})
-
-	if err != nil {
-		return "", fmt.Errorf("error in getting all main shelter data: %v", err)
-	}
-
-	allTransit, _, err := h.ApiClient.GetTransitHubRecords(utils.GetBeneficiariesDataParams{})
-
-	if err != nil {
-		return "", fmt.Errorf("error in getting all transit hub data: %v", err)
-	}
-
-	fText := utils.BuildFullReportText(params.DateStart, params.DateEnd, reportData.Hotline, reportData.Evacuation, reportData.MainShelter, allms, reportData.TransitHub, allTransit, reportData.LocalTransportation, reportData.VehicleTrips, reportData.LastModified)
+	fText := utils.BuildFullReportText(&reportData)
 
 	return fText, nil
 }
