@@ -23,17 +23,15 @@ func AdminOnlyMiddleware(adminIDs ...int64) tele.MiddlewareFunc {
 	}
 }
 
-type FSMState int
-
-const (
-	STATE_START_DATE FSMState = iota
-	STATE_END_DATE
-)
-
-func FSMMiddleware(stateStorage map[int64]FSMState, stateDataStorage map[int64]map[string]string) tele.MiddlewareFunc {
+func FSMMiddleware(stateStorage StateStorage) tele.MiddlewareFunc {
 	return func(next tele.HandlerFunc) tele.HandlerFunc {
 		return func(c tele.Context) error {
+
 			userID := c.Sender().ID
+
+			userSession := stateStorage.GetOrCreateSession(
+				UserID(userID),
+			)
 
 			callback := c.Callback()
 
@@ -41,7 +39,7 @@ func FSMMiddleware(stateStorage map[int64]FSMState, stateDataStorage map[int64]m
 				cdata := strings.TrimSpace(c.Callback().Data)
 
 				if cdata == "cancel" {
-					return CancelState(c, stateDataStorage, stateStorage)
+					return CancelState(c, userSession)
 				}
 			}
 
@@ -54,31 +52,17 @@ func FSMMiddleware(stateStorage map[int64]FSMState, stateDataStorage map[int64]m
 			//	return CancelState(c, stateDataStorage, stateStorage)
 			//}
 
-			state, hasState := stateStorage[userID]
-			if !hasState {
+			if userSession.GetState() == StateNone {
 				return next(c)
 			}
 
-			if stateDataStorage[userID] == nil {
-				stateDataStorage[userID] = make(map[string]string)
+			fun, err := stateStorage.GetHandler(userSession.GetState())
+
+			if err != nil {
+				return err
 			}
 
-			switch state {
-			case STATE_START_DATE:
-
-				if c.Message() != nil {
-					return HandleStartDateInput(c, stateDataStorage[userID], stateStorage)
-				}
-			case STATE_END_DATE:
-				if c.Message() != nil {
-					return HandleEndDateInput(c, stateDataStorage[userID], stateStorage)
-				}
-			default:
-				delete(stateStorage, userID)
-				delete(stateDataStorage, userID)
-			}
-
-			return next(c)
+			return fun(c, userSession)
 		}
 	}
 }
