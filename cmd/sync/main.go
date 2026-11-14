@@ -30,8 +30,6 @@ func NewSyncTask[T any](
 
 func main() {
 
-	//f := sheets.ValuesFilter("asd", "qweq", "zxcz")
-
 	c := config.NewEnvConfig()
 
 	spreadsheetConfig, err := config.NewSpreadsheetConfig(c)
@@ -45,7 +43,7 @@ func main() {
 
 	opts := []option.ClientOption{
 		option.WithAuthCredentialsFile(
-			"service_account", spreadsheetConfig.ServiceAccountPath,
+			option.ServiceAccount, spreadsheetConfig.ServiceAccountPath,
 		),
 	}
 
