@@ -33,22 +33,6 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string(ns))
 }
 
-var SupportedDateLayouts = []string{
-	"02/01/2006",
-	"2/1/2006",
-	"02-01-2006",
-	"2-1-2006",
-	"02.01.2006",
-	"2.1.2006",
-	"2.1-2006",
-	"2006/01/02",
-	"2006-01-02",
-	"01-02-2006",
-	"1-2-2006",
-	"01/02/2006",
-	"02.01.2006 15:04:05",
-}
-
 type DateOnly time.Time
 
 func (d DateOnly) MarshalJSON() ([]byte, error) {
@@ -83,4 +67,14 @@ func (d *DateOnly) UnmarshalJSON(b []byte) error {
 	}
 
 	return fmt.Errorf("incorrect date format %q, expected one of DD/MM/YYYY, YYYY-MM-DD, etc.", s)
+}
+
+type RecordMapper[T any] func(map[string]string) (T, error)
+
+type RowFilter func(map[string]string) bool
+
+type RowGetter func() ([]map[string]string, error)
+
+type Cacher[T any] interface {
+	Save(records []T) error
 }
