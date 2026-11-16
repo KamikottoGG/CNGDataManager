@@ -44,7 +44,11 @@ func (d *DataGuardController) HandleDataGuardCheckLastRecords(c tele.Context) er
 
 	sBuilder := strings.Builder{}
 	now := time.Now()
+
 	sBuilder.WriteString("<b>Звіт по останнім зафіксованим показникам</b>\n")
+	sBuilder.WriteString("<b>Дані актуальні на: <u>")
+	sBuilder.WriteString(repData.CacheUpdateTime.Format("02.01.2006 15:04:05"))
+	sBuilder.WriteString("</u></b>\n\n")
 
 	wSection := func(direction string, monitoringIndicator string, lastDate time.Time) {
 		sBuilder.WriteString("Напрямок: ")
