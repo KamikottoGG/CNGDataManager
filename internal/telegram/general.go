@@ -5,10 +5,11 @@ import (
 )
 
 type HandlersController struct {
-	Config         *config.TelegramBotConfig
-	Keyboards      Keyboards
-	ReportHandlers *ReportHandlersController
-	StateStorage   StateStorage
+	Config            *config.TelegramBotConfig
+	Keyboards         Keyboards
+	ReportHandlers    *ReportHandlersController
+	DataGuardHandlers *DataGuardController
+	StateStorage      StateStorage
 }
 
 func NewHandlersController(config *config.TelegramBotConfig, storage StateStorage, api BeneficiaryAPI) *HandlersController {
@@ -19,6 +20,8 @@ func NewHandlersController(config *config.TelegramBotConfig, storage StateStorag
 	}
 
 	c.ReportHandlers = NewReportHandlersController(api, c.Keyboards, storage)
+
+	c.DataGuardHandlers = newDataGuardController(api, c.Keyboards, storage)
 
 	return &c
 }

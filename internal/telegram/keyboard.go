@@ -5,9 +5,10 @@ import (
 )
 
 type Keyboards struct {
-	CreateReportKeyboard CreateReportKeyboard
-	CancelInlineBtn      tele.Btn
-	MainMenuKeyboard     MainMenuKeyboard
+	CreateReportKeyboard  CreateReportKeyboard
+	DataGuardMenuKeyboard DataGuardKeyboard
+	CancelInlineBtn       tele.Btn
+	MainMenuKeyboard      MainMenuKeyboard
 }
 
 func NewKeyboards() Keyboards {
@@ -21,6 +22,8 @@ func NewKeyboards() Keyboards {
 	}
 
 	kb.MainMenuKeyboard = newMainMenuKeyboard()
+
+	kb.DataGuardMenuKeyboard = newDataGuardKeyboard()
 
 	return kb
 }
@@ -43,23 +46,28 @@ func (k *Keyboards) NewCancelReplyMarkup() *tele.ReplyMarkup {
 type MainMenuKeyboard struct {
 	ReplyKeyboard     tele.ReplyMarkup
 	GenerateReportBtn tele.Btn
+	DataGuardMenuBtn  tele.Btn
 }
 
 func newMainMenuKeyboard() MainMenuKeyboard {
 	kb := tele.ReplyMarkup{
 		ResizeKeyboard: true,
 	}
-	btn := kb.Text("Сгенерувати звіт 📊")
-
+	rBtn := kb.Text("Сгенерувати звіт 📊")
+	gBtn := kb.Text("Data Guard 🛡️")
 	kb.Reply(
 		kb.Row(
-			btn,
+			rBtn,
+		),
+		kb.Row(
+			gBtn,
 		),
 	)
 
 	return MainMenuKeyboard{
 		ReplyKeyboard:     kb,
-		GenerateReportBtn: btn,
+		GenerateReportBtn: rBtn,
+		DataGuardMenuBtn:  gBtn,
 	}
 }
 
@@ -104,4 +112,23 @@ func newCreateReportKeyboard() CreateReportKeyboard {
 	)
 
 	return kb
+}
+
+type DataGuardKeyboard struct {
+	ReplyMarkup  tele.ReplyMarkup
+	BtnCheckLast tele.Btn
+}
+
+func newDataGuardKeyboard() DataGuardKeyboard {
+	d := DataGuardKeyboard{}
+
+	d.ReplyMarkup = tele.ReplyMarkup{}
+	d.BtnCheckLast = d.ReplyMarkup.Data("Останні записи", "check_last_records")
+	d.ReplyMarkup.Inline(
+		d.ReplyMarkup.Row(
+			d.BtnCheckLast,
+		),
+	)
+
+	return d
 }

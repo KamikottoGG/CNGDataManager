@@ -3,6 +3,7 @@ package utils
 import (
 	"CNGDataManager/internal/google/sheets/v2"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -215,4 +216,20 @@ func GetTransitHubGeoDisaggregation(records []sheets.TransitHubRecord) map[strin
 	}
 
 	return (disaggregation)
+}
+
+func GetLastIndicator[T sheets.Record](records []T) time.Time {
+	if len(records) == 0 {
+		return time.Time{}
+	}
+	maxDate := time.Time(records[0].GetIndicatorDate())
+
+	for _, record := range records[1:] {
+		t := time.Time(record.GetIndicatorDate())
+		if maxDate.Before(t) {
+			maxDate = t
+		}
+	}
+
+	return maxDate
 }

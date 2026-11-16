@@ -78,3 +78,7 @@ type RowGetter func() ([]map[string]string, error)
 type Cacher[T any] interface {
 	Save(records []T) error
 }
+
+type Record interface {
+	GetIndicatorDate() DateOnly
+}

@@ -33,6 +33,10 @@ type EvacuationRecord struct {
 	Comment     NullString `json:"comment"`
 }
 
+func (r EvacuationRecord) GetIndicatorDate() DateOnly {
+	return r.Date
+}
+
 type HotlineCallRecord struct {
 	Timestamp           DateOnly       `json:"timestamp"`             // Позначка часу
 	Responsible         string         `json:"responsible"`           // Відповідальний
@@ -62,6 +66,10 @@ type HotlineCallRecord struct {
 	Comment             NullString     `json:"comment"`               // Коментар
 }
 
+func (r HotlineCallRecord) GetIndicatorDate() DateOnly {
+	return r.CallDate
+}
+
 type LocalTransportationRecord struct {
 	Date            DateOnly            `json:"date"`             // Дата [ДД/ММ/РРРР]
 	InformedConsent bool                `json:"informed_consent"` // Надаю інформо-вану згоду (так/ні)
@@ -82,6 +90,10 @@ type LocalTransportationRecord struct {
 	TransportedTo   NullString          `json:"transported_to"`   // Куди перевезли
 	Phone           NullString          `json:"phone"`            // Номер телефону
 	Comment         NullString          `json:"comment"`          // Коментар
+}
+
+func (r LocalTransportationRecord) GetIndicatorDate() DateOnly {
+	return r.Date
 }
 
 type MainShelterRecord struct {
@@ -108,6 +120,10 @@ type MainShelterRecord struct {
 	Needs                NullString `json:"needs"`                // Потреби
 	Status               string     `json:"status"`               // Статус (напр. "Проживает", "Выехал")
 	DepartureDate        DateOnly   `json:"departure_date"`       // Дата виїзду (если еще не выехал -> null)
+}
+
+func (r MainShelterRecord) GetIndicatorDate() DateOnly {
+	return r.ArrivalDate
 }
 
 type TransitHubRecord struct {
@@ -138,6 +154,10 @@ type TransitHubRecord struct {
 	Needs                  NullString          `json:"needs"`                   // Потреби
 }
 
+func (r TransitHubRecord) GetIndicatorDate() DateOnly {
+	return r.ArrivalDate
+}
+
 type VehicleTripRecord struct {
 	Date DateOnly `json:"date"`
 
@@ -161,4 +181,8 @@ type VehicleTripRecord struct {
 
 	Comments NullString `json:"comments"`   // Коментарі
 	ExtraCol NullString `json:"extraCol16"` // Стовпець 16 (технічна або запасна колонка)
+}
+
+func (r VehicleTripRecord) GetIndicatorDate() DateOnly {
+	return r.Date
 }

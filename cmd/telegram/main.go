@@ -63,6 +63,9 @@ func main() {
 
 	bot.Handle(&c.Keyboards.CreateReportKeyboard.BtnCreateReportForOwnTime, c.ReportHandlers.CreateForOwnTimeReport)
 
+	bot.Handle(&c.Keyboards.MainMenuKeyboard.DataGuardMenuBtn, c.DataGuardHandlers.HandleDataGuardMenuButton)
+	bot.Handle(&c.Keyboards.DataGuardMenuKeyboard.BtnCheckLast, c.DataGuardHandlers.HandleDataGuardCheckLastRecords)
+
 	bot.Handle(tele.OnCallback, func(c tele.Context) error {
 		return nil
 	})
