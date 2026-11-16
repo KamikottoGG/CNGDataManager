@@ -81,10 +81,10 @@ func (d *DataGuardController) HandleDataGuardCheckLastRecords(c tele.Context) er
 		if dn == 1 {
 			sBuilder.WriteString(" день назад)")
 		}
-		if dn >= 2 && dn <= 5 {
+		if dn >= 2 && dn < 5 {
 			sBuilder.WriteString(" дні назад)")
 		}
-		if dn > 5 {
+		if dn >= 5 {
 			sBuilder.WriteString(" днів назад)")
 		}
 
