@@ -26,7 +26,7 @@ func newDataGuardController(api BeneficiaryAPI, kb Keyboards, ss StateStorage) *
 
 func (d *DataGuardController) HandleDataGuardMenuButton(c tele.Context) error {
 
-	return c.Send("Вітаємо в меню DataGuard, тут можно слідкувати за якістю данних та їх своєчасним оновленням. \n\nДля продовження виберите опцію з меню нижче 👇",
+	return c.Send("Вітаємо в меню DataGuard, тут у вас є можливість слідкувати за якістю данних та їх своєчасним оновленням. \n\nДля продовження виберите опцію з меню нижче 👇",
 		&d.Keyboards.DataGuardMenuKeyboard.ReplyMarkup)
 }
 
