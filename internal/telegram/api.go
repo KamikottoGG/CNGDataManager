@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	"CNGDataManager/internal/google/sheets"
+	"CNGDataManager/internal/google/sheets/v2"
 	"CNGDataManager/internal/utils"
 
 	"time"

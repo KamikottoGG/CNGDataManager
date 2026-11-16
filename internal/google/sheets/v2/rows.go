@@ -81,11 +81,9 @@ func NewMainShelterRowGetter(service *sheets.Service, spreadsheetID string) RowG
 
 		var f []*sheets.DataFilter
 
-		for _, s := range spr.Sheets {
-			f = append(f, &sheets.DataFilter{
-				A1Range: fmt.Sprintf("'%s'!A1:Z", s.Properties.Title),
-			})
-		}
+		f = append(f, &sheets.DataFilter{
+			A1Range: "'Form_Responses'!A1:Z",
+		})
 
 		b := sheets.BatchGetValuesByDataFilterRequest{DataFilters: f}
 
@@ -148,6 +146,10 @@ func NewVehicleTripRowGetter(service *sheets.Service, spreadsheetID string) RowG
 		var f []*sheets.DataFilter
 
 		for _, s := range spr.Sheets {
+			if s.Properties.Title == "Відповіді форми (2)" {
+				continue
+			}
+
 			f = append(f, &sheets.DataFilter{
 				A1Range: fmt.Sprintf("'%s'!A1:R", s.Properties.Title),
 			})

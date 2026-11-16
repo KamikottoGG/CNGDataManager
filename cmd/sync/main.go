@@ -75,7 +75,7 @@ func main() {
 //
 //import (
 //"CNGDataManager/internal/config"
-//"CNGDataManager/internal/google/sheets"
+//"CNGDataManager/internal/google/sheets/v2"
 //"context"
 //"log"
 //"os"

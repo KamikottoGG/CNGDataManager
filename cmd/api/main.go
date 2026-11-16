@@ -1,7 +1,7 @@
 package main
 
 import (
-	"CNGDataManager/internal/google/sheets"
+	"CNGDataManager/internal/google/sheets/v2"
 	"encoding/json"
 	"log"
 	"net/http"

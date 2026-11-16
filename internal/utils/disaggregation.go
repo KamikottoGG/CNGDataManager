@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"CNGDataManager/internal/google/sheets"
+	"CNGDataManager/internal/google/sheets/v2"
 	"strings"
 	"unicode"
 	"unicode/utf8"

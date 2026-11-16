@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"CNGDataManager/internal/google/sheets"
+	"CNGDataManager/internal/google/sheets/v2"
 	"html"
 	"strconv"
 	"strings"
@@ -59,33 +59,34 @@ func writeSection(sb *strings.Builder, title string, data BeneficiariesDisaggreg
 	writeGroupLine(sb, "Жін. похилого віку", data.ElderlyWomen)
 }
 
-func BuildReportTextRaw(
-	startDate time.Time,
-	endDate time.Time,
-	evacuationDisaggregation,
-	shelterDisaggregation,
-	transitDisaggregation,
-	localTransportationsDisaggregation BeneficiariesDisaggregation,
-) string {
-	var builder strings.Builder
-	builder.Grow(1024)
-
-	builder.WriteString("Звіт: ")
-	builder.WriteString(startDate.Format("02.01.2006"))
-	builder.WriteString(" - ")
-	builder.WriteString(endDate.Format("02.01.2006"))
-	builder.WriteString("\n\n")
-
-	writeSection(&builder, "Евакуація:", evacuationDisaggregation, "")
-	builder.WriteByte('\n')
-	writeSection(&builder, "Прихисток:", shelterDisaggregation, "")
-	builder.WriteByte('\n')
-	writeSection(&builder, "Транзитний пункт:", transitDisaggregation, "")
-	builder.WriteByte('\n')
-	writeSection(&builder, "Перевезення:", localTransportationsDisaggregation, "")
-
-	return strings.TrimRight(builder.String(), "\n")
-}
+// DEPRECATED
+//func BuildReportTextRaw(
+//	startDate time.Time,
+//	endDate time.Time,
+//	evacuationDisaggregation,
+//	shelterDisaggregation,
+//	transitDisaggregation,
+//	localTransportationsDisaggregation BeneficiariesDisaggregation,
+//) string {
+//	var builder strings.Builder
+//	builder.Grow(1024)
+//
+//	builder.WriteString("Звіт: ")
+//	builder.WriteString(startDate.Format("02.01.2006"))
+//	builder.WriteString(" - ")
+//	builder.WriteString(endDate.Format("02.01.2006"))
+//	builder.WriteString("\n\n")
+//
+//	writeSection(&builder, "Евакуація:", evacuationDisaggregation, "")
+//	builder.WriteByte('\n')
+//	writeSection(&builder, "Прихисток:", shelterDisaggregation, "")
+//	builder.WriteByte('\n')
+//	writeSection(&builder, "Транзитний пункт:", transitDisaggregation, "")
+//	builder.WriteByte('\n')
+//	writeSection(&builder, "Перевезення:", localTransportationsDisaggregation, "")
+//
+//	return strings.TrimRight(builder.String(), "\n")
+//}
 
 func writeHeader(sb *strings.Builder, header string) {
 	sb.WriteString(bold(header))

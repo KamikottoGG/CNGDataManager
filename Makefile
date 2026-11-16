@@ -7,7 +7,7 @@ build-all: clean
 	mkdir -p $(DIST_DIR)
 	$(GO_ENV) go build -o $(DIST_DIR)/api-service ./cmd/api
 	$(GO_ENV) go build -o $(DIST_DIR)/bot-service ./cmd/telegram
-	$(GO_ENV) go build -o $(DIST_DIR)/sync-service ./cmd/synchronize
+	$(GO_ENV) go build -o $(DIST_DIR)/sync-service ./cmd/sync
 
 clean:
 	rm -rf $(DIST_DIR)

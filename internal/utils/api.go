@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"CNGDataManager/internal/google/sheets"
+	"CNGDataManager/internal/google/sheets/v2"
+	"io"
 
 	"encoding/json"
 	"errors"
@@ -147,7 +148,9 @@ func fetchRecords[T any](c *APIClient, endpoint string, params GetBeneficiariesD
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	if resp.StatusCode != 200 {
 		return nil, time.Time{}, errors.New("server return http code " + strconv.Itoa(resp.StatusCode))
 	}
